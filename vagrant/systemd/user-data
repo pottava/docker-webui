@@ -1,0 +1,34 @@
+#cloud-config
+
+coreos:
+  update:
+    group: stable
+    reboot-strategy: off
+
+  units:
+    - name: ap.service
+      command: start
+      content: |
+        [Unit]
+        Description=Docker restarter
+        After=docker.service
+        Requires=docker.service
+
+        [Service]
+        ExecStartPre=-/usr/bin/docker kill ap
+        ExecStartPre=-/usr/bin/docker rm ap
+        ExecStart=/usr/bin/docker run --name ap \
+                      -e CONFIG_FILE_PATH=/go/src/github.com/pottava/docker-webui/config.json \
+                      -v /home/core/share:/go/src/github.com/pottava/docker-webui \
+                      -v /var/run/docker.sock:/var/run/docker.sock \
+                      -p 80:80 \
+                      pottava/docker-webui:base \
+                      go run /go/src/github.com/pottava/docker-webui/main.go
+        ExecStop=/usr/bin/docker kill ap
+
+write_files:
+  - path: /etc/resolv.conf
+    permissions: 0644
+    owner: root
+    content: |
+      nameserver 8.8.8.8

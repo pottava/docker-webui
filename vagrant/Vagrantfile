@@ -1,0 +1,43 @@
+# -*- mode: ruby -*-
+# # vi: set ft=ruby :
+require 'fileutils'
+
+$app_name = ENV["APP_NAME"] || "docker-webui.local"
+$coreos_ip = ENV["IPADDRESS"] || "192.168.100.4"
+$coreos_channel = "stable"
+
+
+$current_dir = File.dirname(__FILE__)
+CLOUD_CONFIG_PATH = File.join($current_dir, "systemd/user-data")
+
+Vagrant.configure("2") do |config|
+  config.ssh.insert_key = false
+  config.vm.hostname = $app_name
+  config.vm.box = "coreos-%s" % $coreos_channel
+  config.vm.box_url = "http://%s.release.core-os.net/amd64-usr/current/coreos_production_vagrant.json" % $coreos_channel
+
+  config.vm.provider :virtualbox do |v|
+    v.customize ["modifyvm", :id, "--name", $app_name + ".docker.vm"]
+    v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+    v.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+    v.check_guest_additions = false
+    v.functional_vboxsf     = false
+  end
+  if Vagrant.has_plugin?("vagrant-vbguest") then
+    config.vbguest.auto_update = false
+  end
+  config.vm.provider :virtualbox do |vb|
+    vb.memory = 1024
+    vb.gui = false
+    vb.cpus = 1
+  end
+  config.vm.network :private_network, ip: $coreos_ip
+  config.vm.synced_folder "../", "/home/core/share", :nfs => true, :mount_options => ['nfsvers=3,nolock,udp,noatime,async']
+
+  if File.exist?(CLOUD_CONFIG_PATH)
+    config.vm.provision :file, :source => "#{CLOUD_CONFIG_PATH}", :destination => "/tmp/vagrantfile-user-data"
+    config.vm.provision :shell, :inline => "mv /tmp/vagrantfile-user-data /var/lib/coreos-vagrant/", :privileged => true
+  end
+  config.vm.provision "shell", :path => "scripts/coreos-init.sh"
+  config.vm.provision "shell", run: "always", :path => "scripts/coreos-up.sh"
+end
