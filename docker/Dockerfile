@@ -1,0 +1,7 @@
+# Dockerfile
+
+FROM golang:1.5.0
+MAINTAINER @pottava
+
+RUN go get -u github.com/robfig/cron
+RUN go get -u github.com/fsouza/go-dockerclient
