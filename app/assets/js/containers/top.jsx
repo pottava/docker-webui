@@ -38,7 +38,7 @@ var Table = React.createClass({
       return (
         <table className="table table-striped table-hover">
           <thead></thead>
-          <tbody>There is no data.</tbody>
+          <tbody><tr><th>There is no data.</th></tr></tbody>
         </table>
       );
     }
