@@ -1,0 +1,11 @@
+{{ define "title" }}image history | {{ .AppName }}{{ end }}
+{{ define "css" }}<link rel="stylesheet" href="{{ .StaticFileHost }}/assets/css/app/index.css">{{ end }}
+{{ define "js" }}<script type="text/jsx" src="{{ .StaticFileHost }}/assets/js/images/history.jsx"></script>{{ end }}
+{{ define "content" }}
+
+  <h2 style="margin: 25px 0 20px 0;">History of {{ .Data.ID }}</h2>
+  <input id="image-id" type="hidden" value="{{ .Data.ID }}">
+
+  <div id="data"></div>
+
+{{ end }}

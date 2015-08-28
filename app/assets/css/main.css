@@ -1,0 +1,65 @@
+
+body {
+  padding-top: 80px;
+  height: 100%;
+}
+
+.container {
+  position: relative;
+}
+
+.navbar-collapse {
+  padding: 0;
+}
+.navbar-form {
+  padding-left: 0;
+}
+
+.modal-body {
+  padding-top: 5px;
+}
+
+td.to_right {
+  text-align: right;
+}
+.table .btn-danger {
+  margin: -3px 0 0 0;
+  padding: 0 15px 20px 15px;
+  height: 14px;
+  font-size: 14px;
+  opacity: .3;
+}
+.table tr:hover .btn-danger {
+  opacity: 1;
+}
+
+.table-outer {
+  position: relative;
+  padding-top: 19px;
+  margin-top: 10px;
+}
+.table-inner {
+  overflow: auto;
+  display: block;
+}
+.table-inner .table {
+  margin: 20px 0 0 0;
+}
+.table-inner .table > thead > tr {
+  position: absolute;
+  top: 0;
+  background-color: #F9F9F9;
+}
+.table-inner .table>tbody>tr>td,
+.table-inner .table>tbody>tr>th,
+.table-inner .table>tfoot>tr>td,
+.table-inner .table>tfoot>tr>th,
+.table-inner .table>thead>tr>td,
+.table-inner .table>thead>tr>th {
+  padding: 8px 3px;
+}
+
+pre {
+  font-family: monospace;
+  font-size: 13px;
+}

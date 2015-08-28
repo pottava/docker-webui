@@ -1,0 +1,53 @@
+
+#data-detail {
+  top: 50px;
+}
+#data-detail .modal-header {
+  padding-bottom: 0;
+}
+#data-detail hr {
+  margin-top: 15px;
+  margin-bottom: 5px;
+}
+.data-index a, .data-name a, .detail-refresh a {
+  cursor: pointer;
+}
+.labels {
+  color: silver;
+}
+
+#count {
+  float: right;
+  margin: 37px 0 0 0;
+  color: silver;
+}
+
+#data .nav > li > a {
+  padding: 0;
+}
+#data .nav .open>a, #data .nav .open>a:focus, #data .nav .open>a:hover,
+#data .nav>li>a:focus, #data .nav>li>a:hover {
+  background-color: transparent;
+}
+
+.modal hr {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+.modal-header {
+  padding: 15px 15px 0 15px;
+}
+.detail-refresh {
+  width: 100%;
+}
+.detail-refresh a {
+  float: right;
+}
+pre.well {
+  clear: both;
+  margin: 25px 0 0 0;
+}
+
+.no-wrap {
+  white-space: nowrap;
+}

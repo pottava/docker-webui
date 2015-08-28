@@ -1,0 +1,77 @@
+{{ define "title" }}images | {{ .AppName }}{{ end }}
+{{ define "css" }}<link rel="stylesheet" href="{{ .StaticFileHost }}/assets/css/app/index.css">{{ end }}
+{{ define "js" }}<script type="text/jsx" src="{{ .StaticFileHost }}/assets/js/images/index.jsx"></script>{{ end }}
+{{ define "content" }}
+
+  <div class="navbar-collapse" id="bs-example-navbar-collapse-1">
+    <div class="navbar-form navbar-left" role="search">
+      <div class="form-group">
+        <input id="search-text" type="text" class="form-control" placeholder="Search" autocomplete="off" style="width: 250px;">
+        <a class="btn btn-default" data-toggle="modal" data-target="#image-pull">+</a>
+      </div>
+    </div>
+    <h4 id="count">0 image</h4>
+  </div>
+
+  <div id="data"></div>
+
+  <div id="image-detail" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="detail-title">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span></button>
+          <h3 class="modal-title detail-title"></h3>
+          <hr>
+        </div>
+        <div class="modal-body">
+          <div class="detail-refresh"><a>refresh</a></div>
+          <pre class="well well-sm"><span class="details"></span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="image-pull" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="detail-title">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span></button>
+          <h3 class="modal-title detail-title">Pull a new image</h3>
+          <hr>
+        </div>
+        <div class="modal-body" style="padding: 17px 15px 10px 15px;">
+          <input id="image-name" type="text" class="form-control"
+            placeholder="owner/repository:tag" autocomplete="off"
+            style="width: 100%;">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary act-pull">Pull</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="image-run" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="detail-title">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span></button>
+          <h3 class="modal-title detail-title"></h3>
+          <hr>
+        </div>
+        <div class="modal-body">
+          <textarea id="run-scripts" class="form-control" style="height: 300px;" readonly="true"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary act-run">Run</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{{ end }}

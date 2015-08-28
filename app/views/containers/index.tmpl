@@ -1,0 +1,49 @@
+{{ define "title" }}containers | {{ .AppName }}{{ end }}
+{{ define "css" }}<link rel="stylesheet" href="{{ .StaticFileHost }}/assets/css/app/index.css">{{ end }}
+{{ define "js" }}<script type="text/jsx" src="{{ .StaticFileHost }}/assets/js/containers/index.jsx"></script>{{ end }}
+{{ define "content" }}
+
+  <div id="conditions" class="navbar-collapse" id="bs-example-navbar-collapse-1">
+    <div class="navbar-form navbar-left" role="search">
+      <div class="btn-group" data-filter-key="status">
+        <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+          <span class="caption">All</span>&nbsp;
+          <span class="caret"></span>
+        </a>
+        <ul class="dropdown-menu">
+          <li><a href="#0">All</a></li>
+          <li><a href="#1">created</a></li>
+          <li><a href="#2">restarting</a></li>
+          <li><a href="#3">running</a></li>
+          <li><a href="#4">paused</a></li>
+          <li><a href="#5">exited</a></li>
+          <li><a href="#6">successfully exited</a></li>
+        </ul>
+      </div>
+      <div class="form-group">
+        <input id="search-text" type="text" class="form-control" placeholder="Search" autocomplete="off" style="width: 250px;">
+      </div>
+    </div>
+    <h4 id="count">0 container</h4>
+  </div>
+
+  <div id="data"></div>
+
+  <div id="container-detail" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="detail-title">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span></button>
+          <h3 class="modal-title detail-title"></h3>
+          <hr>
+        </div>
+        <div class="modal-body">
+          <div class="detail-refresh"><a>refresh</a></div>
+          <pre class="well well-sm"><span class="details"></span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{{ end }}
