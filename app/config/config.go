@@ -17,11 +17,11 @@ import (
 func defaultConfig() Config {
 	gopath := os.Getenv("GOPATH")
 	return Config{
-		Name:                   "Docker-WebUI",
-		Port:                   80,
+		Name:                   "docker web-ui",
+		Port:                   9000,
 		LogLevel:               4,
 		DockerEndpoint:         "unix:///var/run/docker.sock",
-		DockerAPIVersion:       "1.20",
+		DockerAPIVersion:       "1.17",
 		DockerPullBeginTimeout: 3 * time.Minute,
 		DockerPullTimeout:      2 * time.Hour,
 		DockerStartTimeout:     1 * time.Minute,

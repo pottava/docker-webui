@@ -11,12 +11,12 @@ func TestDefaultConfig(t *testing.T) {
 	var expected interface{}
 	actual := defaultConfig()
 
-	expected = "Docker-WebUI"
+	expected = "docker web-ui"
 	if actual.Name != expected {
 		t.Errorf("Expected %v, but got %v", expected, actual.Name)
 		return
 	}
-	expected = uint16(80)
+	expected = uint16(9000)
 	if actual.Port != expected {
 		t.Errorf("Expected %v, but got %v", expected, actual.Port)
 		return
@@ -36,7 +36,7 @@ func TestMerge(t *testing.T) {
 		Port:                   8080,
 		LogLevel:               6,
 		DockerEndpoint:         "unix:///var/run/docker.sock",
-		DockerAPIVersion:       "1.20",
+		DockerAPIVersion:       "1.17",
 		DockerPullBeginTimeout: 3 * time.Minute,
 		DockerPullTimeout:      2 * time.Hour,
 		DockerStartTimeout:     1 * time.Minute,
