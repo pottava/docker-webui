@@ -11,10 +11,12 @@ type Config struct {
 	DockerAPIVersion       string `trim:"true"`
 	DockerPullBeginTimeout time.Duration
 	DockerPullTimeout      time.Duration
+	DockerStatTimeout      time.Duration
 	DockerStartTimeout     time.Duration
 	DockerStopTimeout      time.Duration
 	DockerRestartTimeout   time.Duration
 	DockerRmTimeout        time.Duration
 	StaticFileHost         string `trim:"true"`
 	StaticFilePath         string `trim:"true"`
+	PreventSelfStop        bool
 }

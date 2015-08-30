@@ -8,6 +8,10 @@ var app = {};
 		byteFormat: _byteFormat,
 		relativeTime: _relativeTime
 	};
+	app.storage = {
+		set : _set,
+		get : _get
+	};
 
 	function _ajax(arg) {
 		var dt = arg.dataType ? arg.dataType : 'json';
@@ -62,5 +66,59 @@ var app = {};
 			message = candidate + ' week' + (candidate == 1 ? '' : 's') + ' ago';
 		}
 		return message;
+	}
+	var ls = false;
+	try {ls = window.localStorage;} catch (e) {}
+	if (! ls) {
+		ls = window.addBehavior ? (function() {
+			var storage = {}, prefix = 'data-userdata', attrs = document.body, mark = function(
+					key, isRemove, temp, reg) {
+				attrs.load(prefix);
+				var temp = attrs.getAttribute(prefix) || '', reg = RegExp('\\b'
+						+ key + '\\b,?', 'i'), hasKey = reg.test(temp) ? 1 : 0;
+				temp = isRemove ? temp.replace(reg, '') : hasKey ? temp
+						: temp === '' ? key : temp.split(',').concat(key).join(',');
+				attrs.setAttribute(prefix, temp);
+				attrs.save(prefix);
+			};
+			// add IE behavior support
+			attrs.addBehavior('#default#userData');
+
+			storage.getItem = function(key) {
+				attrs.load(key);
+				return attrs.getAttribute(key);
+			};
+			storage.setItem = function(key, value) {
+				attrs.setAttribute(key, value);
+				attrs.save(key);
+				mark(key);
+			};
+			storage.removeItem = function(key) {
+				attrs.removeAttribute(key);
+				attrs.save(key);
+				mark(key, 1);
+			};
+			return storage;
+		})()
+		: (function() {
+			var storage = {}, cache = {};
+			storage.getItem = function(key) {
+				return cache[key];
+			};
+			storage.setItem = function(key, value) {
+				cache[key] = value;
+			};
+			storage.removeItem = function(key) {
+				cache[key] = null;
+			};
+			return storage;
+		})();
+	}
+	function _set(key, value) {
+		try {ls.setItem(key, JSON.stringify(value));} catch (e) {}
+	}
+	function _get(key, def) {
+		var value = ls.getItem(key), candidate = (value != null) ? JSON.parse(value) : undefined;
+		return (candidate == undefined) ? def : candidate;
 	}
 })(jQuery);

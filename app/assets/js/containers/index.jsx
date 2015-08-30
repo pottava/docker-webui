@@ -64,27 +64,27 @@ var TableRow = React.createClass({
   inspect: function() {
     var tr = $(this.getDOMNode()),
         id = tr.attr('data-container-id'),
-        nm = '['+id.substring(0, 4)+'] '+tr.find('.dropdown a span').text();
+        nm = '['+id.substring(0, 4)+'] '+tr.find('.dropdown a.dropdown-toggle').attr('data-container-name');
     _detail({title: nm, url: '/api/container/inspect/'+id});
     return false;
   },
   processes: function() {
-    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').text();
+    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').attr('data-container-name');
     location.href = '/container/top/'+name;
     return false;
   },
   statlog: function() {
-    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').text();
+    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').attr('data-container-name');
     location.href = '/container/statlog/'+name;
     return false;
   },
   changes: function() {
-    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').text();
+    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').attr('data-container-name');
     location.href = '/container/changes/'+name;
     return false;
   },
   start: function() {
-    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').text();
+    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').attr('data-container-name');
     app.func.ajax({type: 'POST', url: '/api/container/start/'+name, success: function (data) {
       if (data.error) {
         alert(data.error);
@@ -95,7 +95,7 @@ var TableRow = React.createClass({
     return false;
   },
   stop: function() {
-    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').text();
+    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').attr('data-container-name');
     app.func.ajax({type: 'POST', url: '/api/container/stop/'+name, success: function (data) {
       if (data.error) {
         alert(data.error);
@@ -106,7 +106,7 @@ var TableRow = React.createClass({
     return false;
   },
   restart: function() {
-    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').text();
+    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').attr('data-container-name');
     app.func.ajax({type: 'POST', url: '/api/container/restart/'+name, success: function (data) {
       if (data.error) {
         alert(data.error);
@@ -117,7 +117,7 @@ var TableRow = React.createClass({
     return false;
   },
   rm: function() {
-    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').text();
+    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').attr('data-container-name');
     if (!window.confirm('Are you sure to remove a container: '+name)) {
       return;
     }
@@ -137,29 +137,30 @@ var TableRow = React.createClass({
   },
   render: function() {
     var container = this.props.content,
-        names = '', ports = '',
+        names = '', name = '', ports = '',
         command = container.command,
         status = container.status;
     if (container.ports) {
       $.map(container.ports, function (port) {
-        ports += port.IP+':'+port.PublicPort+'->'+port.PrivatePort+'/'+port.Type+',';
+        ports += (port.IP ? port.IP+':' : '')+(port.PublicPort ? port.PublicPort+'->' : '')+port.PrivatePort+'/'+port.Type+',';
       });
     }
     if (container.names) {
-      $.map(container.names, function (name) {
-        names += name.replace('/', '') + ',';
+      $.map(container.names, function (n) {
+        names += n.replace('/', '') + ',';
+        name = n.replace('/', '');
       });
     }
     if (command.length > 13) {
       command = command.substring(0, 13) + '..';
     }
-    status = status.replace(/seconds*/, 'sec').replace(/minutes*/, 'min').replace(/About /, '');
+    status = status ? status.replace(/seconds*/, 'sec').replace(/minutes*/, 'min').replace(/About /, '') : '';
     return (
         <tr key={this.props.index} data-container-id={container.id.substring(0, 20)}>
           <td className="data-index">{container.id.substring(0, 4)}</td>
           <td className="data-name"><ul className="nav">
             <li className="dropdown">
-              <a className="dropdown-toggle" data-toggle="dropdown" href="#" aria-expanded="true">
+              <a className="dropdown-toggle" data-toggle="dropdown" href="#" aria-expanded="true" data-container-name={name}>
                 <span>{names.substring(0, names.length-1)}</span>
               </a>
               <ul className="dropdown-menu">

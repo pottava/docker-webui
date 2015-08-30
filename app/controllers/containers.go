@@ -65,7 +65,13 @@ func init() {
 	http.Handle("/api/container/stats/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Path[len("/api/container/stats/"):]
 		result, err := docker.Stats(id, util.RequestGetParamI(r, "count", 1))
-		util.RenderJSON(w, result, err)
+		if err != nil {
+			util.RenderJSON(w, struct {
+				Error string `json:"error"`
+			}{err.Error()}, nil)
+			return
+		}
+		util.RenderJSON(w, result, nil)
 	}))
 	// logs
 	http.Handle("/api/container/logs/", util.Chain(func(w http.ResponseWriter, r *http.Request) {

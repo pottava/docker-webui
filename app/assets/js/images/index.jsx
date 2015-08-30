@@ -59,6 +59,8 @@ function _detail(arg) {
   arg.format = arg.format ? arg.format : function (data) {
     return JSON.stringify(data, true, ' ');
   };
+  $('#progress-bar').hide().find('.progress-bar').css({width: '0%'});
+
   var popup = $('#image-detail'),
       details = popup.find('.details');
   popup.find('.detail-title').text(arg.title);
@@ -76,6 +78,7 @@ function _detail(arg) {
     } else {
       details.text(data).fadeIn();
     }
+    arg.callback && arg.callback();
     popup.modal('show');
     last = arg;
   }, error: function (xhr, status, err) {
@@ -86,7 +89,12 @@ function _detail(arg) {
 function _pull(name) {
   reload = true;
   $('#image-detail').modal('show');
-  _detail({title: name, message: 'Now executing..\n\ndocker pull '+name, url: '/api/image/pull/'+name});
+  _detail({
+    title: name, message: 'Now executing..\n\ndocker pull '+name, url: '/api/image/pull/'+name,
+    callback: function () {$('#progress-bar').fadeOut();}
+  });
+  var bar = $('#progress-bar').show().find('.progress-bar');
+  bar.animate({width: '100%'}, {duration: 1000*45, easing: 'linear'});
 }
 
 var TableRow = React.createClass({
