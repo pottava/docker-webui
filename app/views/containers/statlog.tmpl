@@ -4,10 +4,51 @@
 {{ define "content" }}
   <input id="container-id" type="hidden" value="{{ .Data.ID }}">
 
-  <h2 style="margin: 25px 0 20px 0;">Statistics of {{ .Data.ID }}</h2>
-  <div id="statistics"></div>
+  <div style="position: relative;">
+    <h2 style="margin: 25px 0 20px 0;">Statistics of {{ .Data.ID }}</h2>
+    <div style="position: absolute;top: 0;right: 10px;">
+      <p id="actions" class="bs-component">
+        <a href="#1" class="btn btn-default" data-hover="btn-primary">Restart</a>
+        <a href="#2" class="btn btn-default" data-hover="btn-primary">Start</a>
+        <a href="#3" class="btn btn-default" data-hover="btn-danger">Stop</a>
+      </p>
+    </div>
+  </div>
+  <div id="statistics" style="clear: both;"></div>
 
-  <h2 style="margin: 25px 0 20px 0;">Logs of {{ .Data.ID }}</h2>
-  <div id="logs" style="overflow-y: auto;"></div>
+  <div style="position: relative;">
+    <h2 style="margin: 25px 0 20px 0;">Logs of {{ .Data.ID }}</h2>
+    <div style="position: absolute;top: 40px;right: 10px;">
+      <div class="btn-group">
+        <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" style="margin: 0 5px 0 0;">
+          <span class="caption">refresh / 1 sec</span>&nbsp;
+          <span class="caret"></span>
+        </a>
+        <ul id="refresh-window" class="dropdown-menu">
+          <li><a href="#0">stopped</a></li>
+          <li><a href="#1">1 sec</a></li>
+          <li><a href="#2">2 sec</a></li>
+          <li><a href="#5">5 sec</a></li>
+          <li><a href="#10">10 sec</a></li>
+          <li><a href="#30">30 sec</a></li>
+        </ul>
+      </div>
+      <div class="btn-group">
+        <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+          <span class="caption">20 records</span>&nbsp;
+          <span class="caret"></span>
+        </a>
+        <ul id="monitoring-count" class="dropdown-menu">
+          <li><a href="#200">200 records</a></li>
+          <li><a href="#100">100 records</a></li>
+          <li><a href="#50">50 records</a></li>
+          <li><a href="#20">20 records</a></li>
+          <li><a href="#10">10 records</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div id="logs" style="overflow-y: auto;clear: both;"></div>
 
 {{ end }}

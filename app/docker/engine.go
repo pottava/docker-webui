@@ -38,10 +38,21 @@ type DockerImageMetadata struct {
 }
 
 var cfg *config.Config
+var containerID string
 var pullLock sync.Mutex
 
 func init() {
 	cfg = config.NewConfig()
+
+	if cfg.PreventSelfStop {
+		if candidate, err := misc.ShellExec([]string{"bash", "-c",
+			"cat /proc/self/cgroup | grep -o -e 'docker-.*.scope' | head -n 1"}); err == nil {
+			candidate = strings.Replace(candidate, "docker-", "", -1)
+			candidate = strings.Replace(candidate, ".scope", "", -1)
+			containerID = candidate[:64]
+			logs.Debug.Printf("Docker container ID: %s", containerID)
+		}
+	}
 }
 
 // NewDockerClient returns DockerClient if it was generated successfully
@@ -110,7 +121,7 @@ func (c *DockerClient) Stats(id string, count int) (result []*docker.Stats, err 
 			Stats:   s,
 			Stream:  true,
 			Done:    done,
-			Timeout: 0,
+			Timeout: cfg.DockerStatTimeout,
 		})
 		close(e)
 	}()
@@ -343,6 +354,15 @@ func (c *DockerClient) start(ctx context.Context, id string) DockerContainerMeta
 
 // Stop stops docker containers more safely
 func (c *DockerClient) Stop(id string) DockerContainerMetadata {
+	if cfg.PreventSelfStop {
+		info := c.InspectContainer(id)
+		if containerID == info.Container.ID[:64] {
+			return DockerContainerMetadata{
+				Container: &docker.Container{ID: info.Container.ID},
+				Error:     &CannotXContainerError{" stop ", "Prevented this application itself for stopping"},
+			}
+		}
+	}
 	timeout := time.After(cfg.DockerStopTimeout)
 
 	ctx, cancel := context.WithCancel(context.TODO())
@@ -400,6 +420,15 @@ func (c *DockerClient) Restart(id string, wait uint) DockerContainerMetadata {
 }
 
 func (c *DockerClient) restart(ctx context.Context, id string, wait uint) DockerContainerMetadata {
+	if cfg.PreventSelfStop {
+		info := c.InspectContainer(id)
+		if containerID == info.Container.ID[:64] {
+			return DockerContainerMetadata{
+				Container: &docker.Container{ID: info.Container.ID},
+				Error:     &CannotXContainerError{" restart ", "Prevented this application itself for restarting"},
+			}
+		}
+	}
 	ch := make(chan error, 1)
 	go func() { ch <- c.RestartContainer(id, wait) }()
 

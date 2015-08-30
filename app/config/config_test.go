@@ -39,12 +39,14 @@ func TestMerge(t *testing.T) {
 		DockerAPIVersion:       "1.17",
 		DockerPullBeginTimeout: 3 * time.Minute,
 		DockerPullTimeout:      2 * time.Hour,
-		DockerStartTimeout:     1 * time.Minute,
-		DockerStopTimeout:      1 * time.Minute,
-		DockerRestartTimeout:   1 * time.Minute,
+		DockerStatTimeout:      1 * time.Second,
+		DockerStartTimeout:     10 * time.Second,
+		DockerStopTimeout:      10 * time.Second,
+		DockerRestartTimeout:   10 * time.Second,
 		DockerRmTimeout:        5 * time.Minute,
 		StaticFileHost:         "",
 		StaticFilePath:         gopath + "/src/github.com/pottava/docker-webui/app",
+		PreventSelfStop:        true,
 	}
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("Expected %v, but got %v", expected, actual)

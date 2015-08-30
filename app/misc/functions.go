@@ -2,6 +2,8 @@
 package misc
 
 import (
+	"fmt"
+	"os/exec"
 	"reflect"
 	"strconv"
 	"strings"
@@ -88,6 +90,15 @@ func ParseCsvLine(data string) []string {
 		parsed[i] = strings.TrimSpace(val)
 	}
 	return parsed
+}
+
+// ShellExec executes the commands
+func ShellExec(command []string) (result string, err error) {
+	out, err := exec.Command(command[0], command[1:]...).Output()
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s", out), nil
 }
 
 // TimeToJST changes time.Time to Tokyo time zone

@@ -1,30 +1,114 @@
-var stat_table = false, statistics = {previous: [], current: []}, log_table = false;
+var stat_table = false,
+    statistics = {
+      previous: [],
+      current: []
+    },
+    log_table = false,
+    log_conf = {
+      refresh: app.storage.get('refresh-window', 1),
+      count: app.storage.get('monitoring-count', 20)
+    };
 
 $(document).ready(function () {
   $('#menu-containers').addClass('active');
-  // $('#logs').css({maxHeight: '300px'});
+
+  $('#actions>.btn-default').hover(function () {
+    $(this).addClass($(this).attr('data-hover'));
+  }, function () {
+    $(this).removeClass($(this).attr('data-hover'));
+  }).click(function () {
+    _action(parseInt($(this).blur().attr('href').substring(1), 10));
+    return false;
+  });
+
+  setRefreshWindow(log_conf.refresh);
+  $('#refresh-window a').click(function() {
+    setRefreshWindow(parseInt($(this).attr('href').substring(1), 10));
+    return false;
+  });
+  setMonitoringCount(log_conf.count);
+  $('#monitoring-count a').click(function() {
+    setMonitoringCount(parseInt($(this).attr('href').substring(1), 10));
+    return false;
+  });
+  setInterval(function () {stat_table && stat_table.setProps();}, 1000);
+  refreshLogs();
 });
+
+function _action(flag) {
+  var id = $('#container-id').val(),
+      action = '', msg = '';
+  switch (flag) {
+  case  1: action = 'restart'; msg = 'restarted'; break;
+  case  2: action = 'start'; msg = 'started'; break;
+  case  3: action = 'stop'; msg = 'stopped'; break;
+  default: return;
+  }
+  app.func.ajax({type: 'POST', url: '/api/container/'+action+'/'+id, success: function (data) {
+    var message = data.error ? data.error : msg + ' successfully.';
+    alert(message);
+  }});
+}
+
+function setRefreshWindow(value) {
+  var a = $('#refresh-window a[href="#'+value+'"]'),
+      group = a.closest('.btn-group').removeClass('open');
+  log_conf.refresh = value;
+  app.storage.set('refresh-window', value);
+  group.find('.caption').text('refresh / '+a.text()).blur();
+}
+function setMonitoringCount(value) {
+  var a = $('#monitoring-count a[href="#'+value+'"]'),
+      group = a.closest('.btn-group').removeClass('open');
+  log_conf.count = value;
+  app.storage.set('monitoring-count', value);
+  group.find('.caption').text(a.text()).blur();
+}
+function refreshLogs() {
+  if (log_table && (log_conf.refresh > 0)) {
+    log_table.setProps();
+  }
+  setTimeout(refreshLogs, Math.max(1, log_conf.refresh) * 1000);
+}
 
 var StatTableRow = React.createClass({
   render: function() {
     var stat = this.props.content.current,
         prev = this.props.content.previous,
         cpu_delta = 0, system_delta = 0, cpu_percent = 0;
-    if (prev) {
+    if (prev && stat.cpu_stats) {
       cpu_delta = stat.cpu_stats.cpu_usage.total_usage - prev.cpu_stats.cpu_usage.total_usage;
       system_delta = stat.cpu_stats.system_cpu_usage - prev.cpu_stats.system_cpu_usage;
     }
     if ((system_delta > 0) && (cpu_delta > 0)) {
       cpu_percent = 100.0 * cpu_delta / system_delta * stat.cpu_stats.cpu_usage.percpu_usage.length;
     }
+    var time = '',
+        mem = {usage: '-', max: '-', limit: '-', percent: 0},
+        network = {in: '', out: '', inPacket: '', outPacket: ''};
+    if (stat.read) {
+      time = stat.read.substring(5, 19).replace(/-/, '/').replace('T', ' ');
+      mem = {
+        usage: app.func.byteFormat(stat.memory_stats.usage),
+        max: app.func.byteFormat(stat.memory_stats.max_usage),
+        limit: app.func.byteFormat(stat.memory_stats.limit),
+        percent: stat.memory_stats.usage * 100 / stat.memory_stats.limit
+      };
+      network = {
+        in: app.func.byteFormat(stat.network.rx_bytes),
+        out: app.func.byteFormat(stat.network.tx_bytes),
+        inPacket: stat.network.rx_packets,
+        outPacket: stat.network.tx_packets,
+      };
+    }
     return (
         <tr key={this.props.index}>
-          <td className="data-name">{stat.read.substring(5, 19).replace(/-/, '/').replace('T', ' ')}</td>
+          <td className="data-name">{time}</td>
           <td className="data-name">{(cpu_percent+'').substring(0, 4)}%</td>
-          <td className="data-name">{app.func.byteFormat(stat.memory_stats.usage)} / {app.func.byteFormat(stat.memory_stats.max_usage)} / {app.func.byteFormat(stat.memory_stats.limit)}</td>
-          <td className="data-name">{((stat.memory_stats.usage * 100 / stat.memory_stats.limit)+'').substring(0, 4)}%</td>
-          <td className="data-name">{app.func.byteFormat(stat.network.rx_bytes)} / {app.func.byteFormat(stat.network.tx_bytes)}</td>
-          <td className="data-name">{stat.network.rx_packets} / {stat.network.tx_packets}</td>
+          <td className="data-name">{mem.usage} / {mem.max} / {mem.limit}</td>
+          <td className="data-name">{(mem.percent+'').substring(0, 4)}%</td>
+          <td className="data-name">{network.in} / {network.out}</td>
+          <td className="data-name">{network.inPacket} / {network.outPacket}</td>
         </tr>
     );
   }
@@ -37,10 +121,14 @@ var StatTable = React.createClass({
   load: function(sender) {
     var id = $('#container-id').val();
     app.func.ajax({type: 'GET', url: '/api/container/stats/'+id, success: function (data) {
-      statistics.previous = statistics.current;
-      statistics.current = data;
+      if (data.error) {
+        statistics.previous = true;
+        statistics.current = data;
+      } else {
+        statistics.previous = statistics.current;
+        statistics.current = data;
+      }
       sender.setState({data: statistics});
-      setTimeout(function () {stat_table && stat_table.setProps();}, 1000);
     }});
   },
   componentDidMount: function() {
@@ -93,8 +181,8 @@ var LogTable = React.createClass({
     return {data: []};
   },
   load: function(sender) {
-    var id = $('#container-id').val();
-    app.func.ajax({type: 'GET', url: '/api/container/logs/'+id, success: function (data) {
+    var id = $('#container-id').val(), data = {count: log_conf.count};
+    app.func.ajax({type: 'GET', url: '/api/container/logs/'+id, data: data, success: function (data) {
       var stream = [];
       $.map(data.stdout.split('\n'), function (record) {
         if (! record) return;
@@ -115,7 +203,6 @@ var LogTable = React.createClass({
         });
       });
       sender.setState({data: stream});
-      setTimeout(function () {log_table && log_table.setProps();}, 1000);
     }});
   },
   componentDidMount: function() {
