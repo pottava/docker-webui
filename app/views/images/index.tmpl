@@ -61,6 +61,30 @@
     </div>
   </div>
 
+  <div id="image-tag" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="detail-title">
+    <input type="hidden" class="image-id">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span></button>
+          <h3 class="modal-title detail-title">Tag to <span class="title"></span></h3>
+          <hr>
+        </div>
+        <div class="modal-body" style="padding: 17px 15px 10px 15px;">
+          <div class="item-caption" style="margin-top: 0;">Repository<span style="color: red;">*</span>:</div>
+          <input type="text" class="form-control repository" placeholder="owner/image" autocomplete="off" style="width: 100%;">
+          <div class="item-caption">Tag:</div>
+          <input type="text" class="form-control tag" placeholder="latest" autocomplete="off" style="width: 100%;">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary act-tag">Tag</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="image-run" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="detail-title">
     <div class="modal-dialog" role="document">
       <div class="modal-content">

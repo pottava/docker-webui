@@ -32,6 +32,21 @@ $(document).ready(function () {
     $('#image-pull').modal('hide');
     _pull(name);
   });
+  $('#image-tag').on('shown.bs.modal', function (e) {
+    $('#image-tag .repository').focus();
+  });
+  $('#image-tag .act-tag').click(function (e) {
+    var popup = $('#image-tag'),
+        id = popup.find('.image-id').val(),
+        repository = popup.find('.repository').val(),
+        tag = popup.find('.tag').val();
+    if (repository.length == 0) {
+      popup.find('.repository').focus();
+      return;
+    }
+    popup.modal('hide');
+    _tag(id, repository, tag);
+  });
   $('#image-run .act-run').click(function (e) {
     $('#image-run').modal('hide');
   });
@@ -97,30 +112,51 @@ function _pull(name) {
   bar.animate({width: '100%'}, {duration: 1000*45, easing: 'linear'});
 }
 
+function _tag(id, repository, tag) {
+  var data = {repo: repository, tag: tag};
+  app.func.ajax({type: 'POST', url: '/api/image/tag/'+id, data: data, success: function (data) {
+    table.setProps();
+  }});
+}
+
 var TableRow = React.createClass({
   inspect: function() {
     var tr = $(this.getDOMNode()),
         id = tr.attr('data-image-id'),
-        nm = tr.find('.dropdown a.dropdown-toggle').text();
-    _detail({title: nm, url: '/api/image/inspect/'+id});
+        name = tr.attr('data-image-name');
+    _detail({title: name, url: '/api/image/inspect/'+id});
     return false;
   },
   history: function() {
-    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').text();
+    var name = $(this.getDOMNode()).attr('data-image-name');
     location.href = '/image/history/'+name;
     return false;
   },
+  run: function() {
+    var tr = $(this.getDOMNode()),
+        id = tr.attr('data-image-id'),
+        name = tr.attr('data-image-name'),
+        popup = $('#image-run');
+    $('#run-scripts').val('docker run ' + name);
+    popup.find('.detail-title').text('Run from ' + name);
+    popup.modal('show');
+    return false;
+  },
   containers: function() {
-    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').text();
+    var name = $(this.getDOMNode()).attr('data-image-name');
     location.href = '/?q='+name;
     return false;
   },
   pull: function() {
-    _pull($(this.getDOMNode()).find('.dropdown a.dropdown-toggle').text())
+    var tr = $(this.getDOMNode()),
+        name = tr.attr('data-image-name');
+    _pull(name);
     return false;
   },
   rmi: function() {
-    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').text();
+    var tr = $(this.getDOMNode()),
+        id = tr.attr('data-image-id'),
+        name = tr.attr('data-image-name');
     if (!window.confirm('Are you sure to remove image: '+name)) {
       return;
     }
@@ -133,22 +169,27 @@ var TableRow = React.createClass({
     }});
     return false;
   },
-  run: function() {
-    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').text(),
-        popup = $('#image-run');
-    $('#run-scripts').val('docker run ' + name);
-    popup.find('.detail-title').text('Run from ' + name);
+  tag: function() {
+    var tr = $(this.getDOMNode()),
+        id = tr.attr('data-image-id'),
+        name = tr.attr('data-image-name'),
+        popup = $('#image-tag');
+    popup.find('.title').text(name);
+    popup.find('.image-id').val(id);
+    popup.find('.repository').val(name.substring(0, name.indexOf(':')));
+    popup.find('.tag').val(name.substring(name.indexOf(':') + 1));
     popup.modal('show');
     return false;
   },
   render: function() {
-    var image = this.props.content;
+    var image = this.props.content.image,
+        name = this.props.content.tag;
     return (
-        <tr key={this.props.index} data-image-id={image.id.substring(0, 20)}>
+        <tr key={this.props.index} data-image-id={image.id.substring(0, 20)} data-image-name={name}>
           <td className="data-index">{image.id.substring(0, 10)}</td>
           <td className="data-name"><ul className="nav">
             <li className="dropdown">
-              <a className="dropdown-toggle" data-toggle="dropdown" href="#" aria-expanded="true">{image.repoTags}</a>
+              <a className="dropdown-toggle" data-toggle="dropdown" href="#" aria-expanded="true">{name}</a>
               <ul className="dropdown-menu">
                 <li><a onClick={this.inspect}>inspect</a></li>
                 <li><a onClick={this.history}>history</a></li>
@@ -156,6 +197,7 @@ var TableRow = React.createClass({
                 <li><a onClick={this.containers}>containers</a></li>
                 <li className="divider"></li>
                 <li><a onClick={this.pull}>pull again</a></li>
+                <li><a onClick={this.tag}>tag</a></li>
                 <li><a onClick={this.rmi}>rmi</a></li>
               </ul>
             </li>
@@ -186,9 +228,11 @@ var Table = React.createClass({
   },
   render: function() {
     var rows = this.state.data.map(function(record, index) {
-      return (
-          <TableRow key={record.name} index={index} content={record} />
-      );
+      return record.repoTags.map(function(tag, tagIndex) {
+        return (
+            <TableRow key={record.name} index={index*100+tagIndex} content={{image: record, tag: tag}} />
+        );
+      });
     });
     return (
         <table className="table table-striped table-hover">

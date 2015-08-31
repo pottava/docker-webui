@@ -48,6 +48,9 @@ pre.well {
   margin: 25px 0 0 0;
 }
 
+.item-caption {
+  margin: 12px 0 5px 0;
+}
 .no-wrap {
   white-space: nowrap;
 }

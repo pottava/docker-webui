@@ -28,7 +28,9 @@ func defaultConfig() Config {
 		DockerStartTimeout:     10 * time.Second,
 		DockerStopTimeout:      10 * time.Second,
 		DockerRestartTimeout:   10 * time.Second,
+		DockerKillTimeout:      10 * time.Second,
 		DockerRmTimeout:        5 * time.Minute,
+		DockerCommitTimeout:    30 * time.Second,
 		StaticFileHost:         "",
 		StaticFilePath:         gopath + "/src/github.com/pottava/docker-webui/app",
 		PreventSelfStop:        true,
@@ -60,11 +62,13 @@ func environmentConfig() Config {
 		DockerAPIVersion:       os.Getenv("APP_DOCKER_API_VERSION"),
 		DockerPullBeginTimeout: misc.ParseDuration(os.Getenv("APP_DOCKER_PULL_BEGIN_TIMEOUT")),
 		DockerPullTimeout:      misc.ParseDuration(os.Getenv("APP_DOCKER_PULL_TIMEOUT")),
-		DockerStatTimeout:      1 * time.Second,
+		DockerStatTimeout:      misc.ParseDuration(os.Getenv("APP_DOCKER_STAT_TIMEOUT")),
 		DockerStartTimeout:     misc.ParseDuration(os.Getenv("APP_DOCKER_START_TIMEOUT")),
 		DockerStopTimeout:      misc.ParseDuration(os.Getenv("APP_DOCKER_STOP_TIMEOUT")),
 		DockerRestartTimeout:   misc.ParseDuration(os.Getenv("APP_DOCKER_RESTART_TIMEOUT")),
+		DockerKillTimeout:      misc.ParseDuration(os.Getenv("APP_DOCKER_KILL_TIMEOUT")),
 		DockerRmTimeout:        misc.ParseDuration(os.Getenv("APP_DOCKER_RM_TIMEOUT")),
+		DockerCommitTimeout:    misc.ParseDuration(os.Getenv("APP_DOCKER_COMMIT_TIMEOUT")),
 		StaticFileHost:         os.Getenv("APP_STATIC_FILE_HOST"),
 		StaticFilePath:         os.Getenv("APP_STATIC_FILE_PATH"),
 		PreventSelfStop:        misc.ParseBool(os.Getenv("APP_PREVENT_SELF_STOP")),
@@ -143,11 +147,11 @@ func (config *Config) String() string {
 	return fmt.Sprintf(
 		"Name: %v, Port: %v, LogLevel: %v, DockerEndpoint: %v, DockerAPIVersion: %v, "+
 			"DockerPullBeginTimeout: %v, DockerPullTimeout: %v, DockerStatTimeout: %v, DockerStartTimeout: %v, "+
-			"DockerStopTimeout: %v, DockerRestartTimeout: %v, DockerRmTimeout: %v, "+
-			"StaticFileHost: %v, StaticFilePath: %v, PreventSelfStop: %v",
+			"DockerStopTimeout: %v, DockerRestartTimeout: %v, DockerKillTimeout: %v, DockerRmTimeout: %v, "+
+			"DockerCommitTimeout: %v, StaticFileHost: %v, StaticFilePath: %v, PreventSelfStop: %v",
 		config.Name, config.Port, config.LogLevel,
 		config.DockerEndpoint, config.DockerAPIVersion, config.DockerPullBeginTimeout,
 		config.DockerPullTimeout, config.DockerStatTimeout, config.DockerStartTimeout, config.DockerStopTimeout,
-		config.DockerRestartTimeout, config.DockerRmTimeout,
-		config.StaticFileHost, config.StaticFilePath, config.PreventSelfStop)
+		config.DockerRestartTimeout, config.DockerKillTimeout, config.DockerRmTimeout,
+		config.DockerCommitTimeout, config.StaticFileHost, config.StaticFilePath, config.PreventSelfStop)
 }

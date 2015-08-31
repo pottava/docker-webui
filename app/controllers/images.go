@@ -80,5 +80,17 @@ func init() {
 		}
 		util.RenderJSON(w, message, nil)
 	}))
+	// tag
+	http.Handle("/api/image/tag/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+		repository, _ := util.RequestPostParam(r, "repo")
+		tag, _ := util.RequestPostParam(r, "tag")
+
+		err := docker.Tag(r.URL.Path[len("/api/image/tag/"):], repository, tag)
+		message := "tagged successfully."
+		if err != nil {
+			message = err.Error()
+		}
+		util.RenderJSON(w, message, nil)
+	}))
 
 }

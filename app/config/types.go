@@ -15,7 +15,9 @@ type Config struct {
 	DockerStartTimeout     time.Duration
 	DockerStopTimeout      time.Duration
 	DockerRestartTimeout   time.Duration
+	DockerKillTimeout      time.Duration
 	DockerRmTimeout        time.Duration
+	DockerCommitTimeout    time.Duration
 	StaticFileHost         string `trim:"true"`
 	StaticFilePath         string `trim:"true"`
 	PreventSelfStop        bool
