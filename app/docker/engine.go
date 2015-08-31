@@ -183,6 +183,14 @@ func (c *DockerClient) History(id string) []docker.ImageHistory {
 	return history
 }
 
+// Rename renames the container
+func (c *DockerClient) Rename(id, name string) error {
+	return c.RenameContainer(docker.RenameContainerOptions{
+		ID:   id,
+		Name: name,
+	})
+}
+
 // Pull pulls docker images more safely
 func (c *DockerClient) Pull(image string) DockerImageMetadata {
 	timeout := time.After(cfg.DockerPullTimeout)
@@ -314,6 +322,53 @@ func (c *DockerClient) run(ctx context.Context, opt docker.CreateContainerOption
 	}
 }
 
+// Restart restarts docker containers more safely
+func (c *DockerClient) Restart(id string, wait uint) DockerContainerMetadata {
+	timeout := time.After(cfg.DockerRestartTimeout)
+
+	ctx, cancel := context.WithCancel(context.TODO())
+	response := make(chan DockerContainerMetadata, 1)
+	go func() { response <- c.restart(ctx, id, wait) }()
+
+	select {
+	case resp := <-response:
+		return resp
+	case <-timeout:
+		cancel()
+		return DockerContainerMetadata{
+			Container: &docker.Container{ID: ""},
+			Error:     &DockerTimeoutError{cfg.DockerRestartTimeout, "restarting"},
+		}
+	}
+}
+
+func (c *DockerClient) restart(ctx context.Context, id string, wait uint) DockerContainerMetadata {
+	if cfg.PreventSelfStop {
+		info := c.InspectContainer(id)
+		if containerID == info.Container.ID[:64] {
+			return DockerContainerMetadata{
+				Container: &docker.Container{ID: info.Container.ID},
+				Error:     &CannotXContainerError{" restart ", "Prevented this application itself for restarting"},
+			}
+		}
+	}
+	ch := make(chan error, 1)
+	go func() { ch <- c.RestartContainer(id, wait) }()
+
+	select {
+	case err := <-ch:
+		meta := c.InspectContainer(id)
+		if err != nil {
+			meta.Error = CannotXContainerError{"Start", err.Error()}
+		}
+		return meta
+	case <-ctx.Done():
+		return DockerContainerMetadata{
+			Container: &docker.Container{ID: id},
+		}
+	}
+}
+
 // Start starts docker containers more safely
 func (c *DockerClient) Start(id string) DockerContainerMetadata {
 	timeout := time.After(cfg.DockerStartTimeout)
@@ -329,7 +384,7 @@ func (c *DockerClient) Start(id string) DockerContainerMetadata {
 		cancel()
 		return DockerContainerMetadata{
 			Container: &docker.Container{ID: ""},
-			Error:     &DockerTimeoutError{cfg.DockerStartTimeout, "started"},
+			Error:     &DockerTimeoutError{cfg.DockerStartTimeout, "starting"},
 		}
 	}
 }
@@ -376,7 +431,7 @@ func (c *DockerClient) Stop(id string) DockerContainerMetadata {
 		cancel()
 		return DockerContainerMetadata{
 			Container: &docker.Container{ID: ""},
-			Error:     &DockerTimeoutError{cfg.DockerStopTimeout, "stopped"},
+			Error:     &DockerTimeoutError{cfg.DockerStopTimeout, "stopping"},
 		}
 	}
 }
@@ -399,13 +454,13 @@ func (c *DockerClient) stop(ctx context.Context, id string) DockerContainerMetad
 	}
 }
 
-// Restart restarts docker containers more safely
-func (c *DockerClient) Restart(id string, wait uint) DockerContainerMetadata {
-	timeout := time.After(cfg.DockerRestartTimeout)
+// Kill kills docker containers more safely
+func (c *DockerClient) Kill(id string, wait uint) DockerContainerMetadata {
+	timeout := time.After(cfg.DockerKillTimeout)
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	response := make(chan DockerContainerMetadata, 1)
-	go func() { response <- c.restart(ctx, id, wait) }()
+	go func() { response <- c.kill(ctx, id, wait) }()
 
 	select {
 	case resp := <-response:
@@ -414,23 +469,28 @@ func (c *DockerClient) Restart(id string, wait uint) DockerContainerMetadata {
 		cancel()
 		return DockerContainerMetadata{
 			Container: &docker.Container{ID: ""},
-			Error:     &DockerTimeoutError{cfg.DockerRestartTimeout, "restarted"},
+			Error:     &DockerTimeoutError{cfg.DockerKillTimeout, "killing"},
 		}
 	}
 }
 
-func (c *DockerClient) restart(ctx context.Context, id string, wait uint) DockerContainerMetadata {
+func (c *DockerClient) kill(ctx context.Context, id string, wait uint) DockerContainerMetadata {
 	if cfg.PreventSelfStop {
 		info := c.InspectContainer(id)
 		if containerID == info.Container.ID[:64] {
 			return DockerContainerMetadata{
 				Container: &docker.Container{ID: info.Container.ID},
-				Error:     &CannotXContainerError{" restart ", "Prevented this application itself for restarting"},
+				Error:     &CannotXContainerError{" kill ", "Prevented this application itself for killing"},
 			}
 		}
 	}
 	ch := make(chan error, 1)
-	go func() { ch <- c.RestartContainer(id, wait) }()
+	go func() {
+		ch <- c.KillContainer(docker.KillContainerOptions{
+			ID:     id,
+			Signal: docker.SIGKILL,
+		})
+	}()
 
 	select {
 	case err := <-ch:
@@ -444,6 +504,38 @@ func (c *DockerClient) restart(ctx context.Context, id string, wait uint) Docker
 			Container: &docker.Container{ID: id},
 		}
 	}
+}
+
+// Commit commit docker containers more safely
+func (c *DockerClient) Commit(id, repository, tag, message, author string) DockerImageMetadata {
+	timeout := time.After(cfg.DockerCommitTimeout)
+	response := make(chan DockerImageMetadata, 1)
+	go func() {
+		image, err := c.CommitContainer(docker.CommitContainerOptions{
+			Container:  id,
+			Repository: repository,
+			Tag:        tag,
+			Message:    message,
+			Author:     author,
+		})
+		response <- DockerImageMetadata{Image: image, Error: err}
+	}()
+	select {
+	case resp := <-response:
+		return resp
+	case <-timeout:
+		return DockerImageMetadata{
+			Image: &docker.Image{ID: ""},
+			Error: &DockerTimeoutError{cfg.DockerCommitTimeout, "committing"}}
+	}
+}
+
+// Tag tags docker images more safely
+func (c *DockerClient) Tag(id, repository, tag string) error {
+	return c.TagImage(id, docker.TagImageOptions{
+		Repo: repository,
+		Tag:  tag,
+	})
 }
 
 // Rm removes docker containers more safely

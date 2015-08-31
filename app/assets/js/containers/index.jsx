@@ -1,6 +1,6 @@
 
 var table, query = app.func.query('q'),
-    filters = {status: 0, text: ''};
+    filters = {status: app.storage.get('filters-status', 3), text: ''};
 if (query != '') {
   filters.text = query.replace(/\s/g,' ').replace(/　/g,' ');
   filters.text = filters.text.replace(/^\s+|\s+$/gm,'').toUpperCase();
@@ -13,16 +13,46 @@ $(document).ready(function () {
   var search = $('#search-text').blur(_search);
   if (query != '') search.val(query);
 
+  setStatusFilter(filters.status);
   $('#conditions .dropdown-menu a').click(function() {
-    var a = $(this), group = a.closest('.btn-group').removeClass('open');
-    filters[group.attr('data-filter-key')] = parseInt(a.attr('href').substring(1), 10);
-    group.find('.caption').text(a.text()).blur();
+    setStatusFilter(parseInt($(this).attr('href').substring(1), 10));
     table.setProps();
     return false;
   });
   $('.detail-refresh a').click(function (e) {
     _detail();
     return false;
+  });
+  $('#container-name').on('shown.bs.modal', function (e) {
+    $('#container-name input').focus();
+  });
+  $('#container-name .act-rename').click(function (e) {
+    var popup = $('#container-name'),
+        name = popup.find('.title').text(),
+        newname = app.func.trim(popup.find('input').val());
+    if (newname.length == 0) {
+      popup.find('input').focus();
+      return;
+    }
+    popup.modal('hide');
+    _rename(name, newname);
+  });
+  $('#container-commit').on('shown.bs.modal', function (e) {
+    $('#container-commit .tag').focus();
+  });
+  $('#container-commit .act-commit').click(function (e) {
+    var popup = $('#container-commit'),
+        name = popup.find('.title').text(),
+        repository = popup.find('.repository').val(),
+        tag = popup.find('.tag').val(),
+        message = popup.find('.message').val(),
+        author = popup.find('.author').val();
+    if (repository.length == 0) {
+      popup.find('.repository').focus();
+      return;
+    }
+    popup.modal('hide');
+    _commit(name, repository, tag, message, author);
   });
 });
 
@@ -32,6 +62,14 @@ $(window).keyup(function (e) {
     _search();
   }
 });
+
+function setStatusFilter(value) {
+  var a = $('#conditions a[href="#'+value+'"]'),
+      group = a.closest('.btn-group').removeClass('open');
+  group.find('.caption').text(a.text()).blur();
+  app.storage.set('filters-status', value);
+  filters.status = value;
+}
 
 function _search() {
   var candidate = $('#search-text').val().replace(/\s/g,' ').replace(/　/g,' ');
@@ -60,6 +98,25 @@ function _detail(arg) {
   }});
 }
 
+function _rename(id, newname) {
+  var data = {name: newname};
+  app.func.ajax({type: 'POST', url: '/api/container/rename/'+id, data: data, success: function (data) {
+    if (data.indexOf('successfully') == -1) {
+      alert(data);
+      return;
+    }
+    table.setProps();
+  }});
+}
+
+function _commit(id, repository, tag, message, author) {
+  var data = {repo: repository, tag: tag, msg: message, author: author};
+  app.func.ajax({type: 'POST', url: '/api/container/commit/'+id, data: data, success: function (data) {
+    var message = data.error ? data.error : 'committed successfully.';
+    alert(message);
+  }});
+}
+
 var TableRow = React.createClass({
   inspect: function() {
     var tr = $(this.getDOMNode()),
@@ -83,51 +140,58 @@ var TableRow = React.createClass({
     location.href = '/container/changes/'+name;
     return false;
   },
-  start: function() {
-    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').attr('data-container-name');
-    app.func.ajax({type: 'POST', url: '/api/container/start/'+name, success: function (data) {
-      if (data.error) {
-        alert(data.error);
-        return;
-      }
+  _action: function (sender, arg) {
+    var name = $(sender.getDOMNode()).find('.dropdown a.dropdown-toggle').attr('data-container-name');
+    var success = arg.success ? arg.success : function (data) {
+      var message = data.error ? data.error : (arg.msg ? arg.msg : arg.action + 'ed') + ' successfully.';
       table.setProps();
-    }});
+      alert(message);
+    };
+    if (arg.confirm && !window.confirm(arg.confirm + name)) {
+      return;
+    }
+    app.func.ajax({type: 'POST', url: '/api/container/'+arg.action+'/'+name, success: success});
+  },
+  restart: function() {
+    this._action(this, {action: 'restart'});
+    return false;
+  },
+  start: function() {
+    this._action(this, {action: 'start'});
     return false;
   },
   stop: function() {
-    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').attr('data-container-name');
-    app.func.ajax({type: 'POST', url: '/api/container/stop/'+name, success: function (data) {
-      if (data.error) {
-        alert(data.error);
-        return;
-      }
-      table.setProps();
-    }});
+    this._action(this, {action: 'stop', msg: 'stopped'});
     return false;
   },
-  restart: function() {
-    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').attr('data-container-name');
-    app.func.ajax({type: 'POST', url: '/api/container/restart/'+name, success: function (data) {
-      if (data.error) {
-        alert(data.error);
-        return;
-      }
-      table.setProps();
-    }});
+  kill: function() {
+    this._action(this, {action: 'kill'});
     return false;
   },
   rm: function() {
+    this._action(this, {action: 'rm', msg: 'removed', confirm: 'Are you sure to remove the container?\nID: '});
+    return false;
+  },
+  exec: function() {
+    return false;
+  },
+  rename: function() {
     var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').attr('data-container-name');
-    if (!window.confirm('Are you sure to remove a container: '+name)) {
-      return;
-    }
-    app.func.ajax({type: 'POST', url: '/api/container/rm/'+name, success: function (data) {
-      if (data != 'removed successfully.') {
-        alert(data);
-        return;
-      }
-      table.setProps();
-    }});
+    var popup = $('#container-name');
+    popup.find('.title').text(name);
+    popup.find('input').val(name);
+    popup.modal('show');
+    return false;
+  },
+  commit: function() {
+    var tr = $(this.getDOMNode()),
+        name = tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
+        repo = tr.find('.image').text(),
+        popup = $('#container-commit');
+    popup.find('.title').text(name);
+    popup.find('.repository').val(repo.substring(0, repo.indexOf(':')));
+    popup.find('.tag').val(repo.substring(repo.indexOf(':') + 1));
+    popup.modal('show');
     return false;
   },
   image: function() {
@@ -147,7 +211,7 @@ var TableRow = React.createClass({
     }
     if (container.names) {
       $.map(container.names, function (n) {
-        names += n.replace('/', '') + ',';
+        names += n.replace('/', '') + ', ';
         name = n.replace('/', '');
       });
     }
@@ -161,19 +225,22 @@ var TableRow = React.createClass({
           <td className="data-name"><ul className="nav">
             <li className="dropdown">
               <a className="dropdown-toggle" data-toggle="dropdown" href="#" aria-expanded="true" data-container-name={name}>
-                <span>{names.substring(0, names.length-1)}</span>
+                <span>{names.substring(0, names.length-2)}</span>
               </a>
               <ul className="dropdown-menu">
                 <li><a onClick={this.inspect}>inspect</a></li>
                 <li><a onClick={this.processes}>processes</a></li>
                 <li><a onClick={this.statlog}>stats & logs</a></li>
                 <li><a onClick={this.changes}>changes (diff)</a></li>
+                <li><a onClick={this.rename}>rename</a></li>
                 <li className="divider"></li>
+                <li><a onClick={this.restart}>restart</a></li>
                 <li><a onClick={this.start}>start</a></li>
                 <li><a onClick={this.stop}>stop</a></li>
-                <li><a onClick={this.restart}>restart</a></li>
+                <li><a onClick={this.kill}>kill</a></li>
                 <li><a onClick={this.rm}>rm</a></li>
                 <li className="divider"></li>
+                <li><a onClick={this.commit}>commit</a></li>
                 <li><a onClick={this.image}>image</a></li>
               </ul>
             </li>

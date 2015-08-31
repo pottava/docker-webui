@@ -94,6 +94,21 @@ func init() {
 		util.RenderJSON(w, docker.Changes(id), nil)
 	}))
 
+	// restart
+	http.Handle("/api/container/restart/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			http.NotFound(w, r)
+			return
+		}
+		meta := docker.Restart(r.URL.Path[len("/api/container/restart/"):], 5)
+		if meta.Error != nil {
+			util.RenderJSON(w, struct {
+				Error string `json:"error"`
+			}{meta.Error.Error()}, nil)
+			return
+		}
+		util.RenderJSON(w, meta.Container, nil)
+	}))
 	// start
 	http.Handle("/api/container/start/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
@@ -124,13 +139,13 @@ func init() {
 		}
 		util.RenderJSON(w, meta.Container, nil)
 	}))
-	// restart
-	http.Handle("/api/container/restart/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	// kill
+	http.Handle("/api/container/kill/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.NotFound(w, r)
 			return
 		}
-		meta := docker.Restart(r.URL.Path[len("/api/container/restart/"):], 5)
+		meta := docker.Kill(r.URL.Path[len("/api/container/kill/"):], 5)
 		if meta.Error != nil {
 			util.RenderJSON(w, struct {
 				Error string `json:"error"`
@@ -151,6 +166,37 @@ func init() {
 			message = err.Error()
 		}
 		util.RenderJSON(w, message, nil)
+	}))
+	// rename
+	http.Handle("/api/container/rename/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+		if name, found := util.RequestPostParam(r, "name"); found {
+			err := docker.Rename(r.URL.Path[len("/api/container/rename/"):], name)
+			message := "renamed successfully."
+			if err != nil {
+				message = err.Error()
+			}
+			util.RenderJSON(w, message, nil)
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	// commit
+	http.Handle("/api/container/commit/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+		repository, _ := util.RequestPostParam(r, "repo")
+		tag, _ := util.RequestPostParam(r, "tag")
+		massage, _ := util.RequestPostParam(r, "msg")
+		author, _ := util.RequestPostParam(r, "author")
+
+		meta := docker.Commit(
+			r.URL.Path[len("/api/container/commit/"):],
+			repository, tag, massage, author)
+		if meta.Error != nil {
+			util.RenderJSON(w, struct {
+				Error string `json:"error"`
+			}{meta.Error.Error()}, nil)
+			return
+		}
+		util.RenderJSON(w, meta.Image, nil)
 	}))
 
 }
