@@ -3,17 +3,13 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/pottava/docker-webui/app/docker"
+	"github.com/pottava/docker-webui/app/engine"
 	util "github.com/pottava/docker-webui/app/http"
-	"github.com/pottava/docker-webui/app/logs"
 	"github.com/pottava/docker-webui/app/models"
 )
 
 func init() {
-	docker, err := engine.NewDockerClient()
-	if err != nil {
-		logs.Fatal.Printf("@docker.NewClient %v", err)
-	}
+	docker := engine.Docker
 
 	http.Handle("/images", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		util.RenderHTML(w, []string{"images/index.tmpl"}, nil, nil)
@@ -34,7 +30,7 @@ func init() {
 		if q, found := util.RequestGetParam(r, "q"); found {
 			words = util.SplittedUpperStrings(q)
 		}
-		util.RenderJSON(w, models.SearchImages(images, words), err)
+		util.RenderJSON(w, models.SearchImages(images, words), nil)
 	}))
 
 	// inspect
@@ -64,8 +60,8 @@ func init() {
 			http.NotFound(w, r)
 			return
 		}
-		meta := docker.Run(models.ParseCreateContainerOption(r))
-		util.RenderJSON(w, meta.Container, meta.Error)
+		// meta := docker.Run(models.ParseCreateContainerOption(r))
+		// util.RenderJSON(w, meta.Container, meta.Error)
 	}))
 	// rmi
 	http.Handle("/api/image/rmi/", util.Chain(func(w http.ResponseWriter, r *http.Request) {

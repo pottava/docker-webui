@@ -1,4 +1,3 @@
-// Package engine wrapped docker client APIs
 package engine
 
 import (
@@ -37,6 +36,9 @@ type DockerImageMetadata struct {
 	Error error
 }
 
+// Docker is a client for docker
+var Docker *DockerClient
+
 var cfg *config.Config
 var containerID string
 var pullLock sync.Mutex
@@ -53,19 +55,24 @@ func init() {
 			logs.Debug.Printf("Docker container ID: %s", containerID)
 		}
 	}
+	err := SetDockerClient(cfg.DockerEndpoint)
+	if err != nil {
+		logs.Fatal.Printf("@docker.NewVersionedClient %v", err)
+	}
 }
 
-// NewDockerClient returns DockerClient if it was generated successfully
-func NewDockerClient() (*DockerClient, error) {
-	client, err := docker.NewVersionedClient(cfg.DockerEndpoint, cfg.DockerAPIVersion)
+// SetDockerClient sets DockerClient if it was generated successfully
+func SetDockerClient(endpoint string) error {
+	client, err := docker.NewVersionedClient(endpoint, cfg.DockerAPIVersion)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	err = client.Ping()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &DockerClient{client}, nil
+	Docker = &DockerClient{client}
+	return nil
 }
 
 // InspectContainer inspects the docker container
@@ -286,13 +293,19 @@ func (c *DockerClient) pull(image string) DockerImageMetadata {
 	return c.InspectImage(opts.Repository)
 }
 
-// Run runs docker containers more safely
-func (c *DockerClient) Run(opt docker.CreateContainerOptions) DockerContainerMetadata {
+// Create creates docker containers more safely
+func (c *DockerClient) Create(name string, config *docker.Config, host *docker.HostConfig) DockerContainerMetadata {
 	timeout := time.After(cfg.DockerStartTimeout)
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	response := make(chan DockerContainerMetadata, 1)
-	go func() { response <- c.run(ctx, opt) }()
+	go func() {
+		response <- c.create(ctx, docker.CreateContainerOptions{
+			Name:       name,
+			Config:     config,
+			HostConfig: host,
+		})
+	}()
 
 	select {
 	case resp := <-response:
@@ -306,7 +319,7 @@ func (c *DockerClient) Run(opt docker.CreateContainerOptions) DockerContainerMet
 	}
 }
 
-func (c *DockerClient) run(ctx context.Context, opt docker.CreateContainerOptions) DockerContainerMetadata {
+func (c *DockerClient) create(ctx context.Context, opt docker.CreateContainerOptions) DockerContainerMetadata {
 	ch := make(chan DockerContainerMetadata, 1)
 	go func() {
 		container, err := c.CreateContainer(opt)
@@ -569,7 +582,9 @@ func (c *DockerClient) Rmi(id string) error {
 	}()
 	select {
 	case resp := <-response:
-		logs.Debug.Printf("Remove completed for image: %v", id)
+		if resp == nil {
+			logs.Debug.Printf("Remove completed for image: %v", id)
+		}
 		return resp
 	case <-timeout:
 		return &DockerTimeoutError{cfg.DockerRmTimeout, "removing"}

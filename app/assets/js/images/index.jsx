@@ -157,6 +157,9 @@ var TableRow = React.createClass({
     var tr = $(this.getDOMNode()),
         id = tr.attr('data-image-id'),
         name = tr.attr('data-image-name');
+    if ((name == '') || (name == '<none>:<none>')) {
+      name = id;
+    }
     if (!window.confirm('Are you sure to remove image: '+name)) {
       return;
     }

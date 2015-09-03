@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
 
 	docker "github.com/fsouza/go-dockerclient"
@@ -143,9 +142,4 @@ func (c DockerContainer) toUpperFields() DockerContainer {
 		container.Names[idx] = strings.ToUpper(name)
 	}
 	return container
-}
-
-// ParseCreateContainerOption parse HTTP request to CreateContainerOptions
-func ParseCreateContainerOption(r *http.Request) docker.CreateContainerOptions {
-	return docker.CreateContainerOptions{}
 }

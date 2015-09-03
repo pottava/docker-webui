@@ -2,20 +2,21 @@
 package controllers
 
 import (
+	"encoding/json"
 	"net/http"
 	"time"
 
-	"github.com/pottava/docker-webui/app/docker"
+	"github.com/docker/docker/pkg/parsers"
+
+	"github.com/pottava/docker-webui/app/engine"
 	util "github.com/pottava/docker-webui/app/http"
 	"github.com/pottava/docker-webui/app/logs"
+	"github.com/pottava/docker-webui/app/misc"
 	"github.com/pottava/docker-webui/app/models"
 )
 
 func init() {
-	docker, err := engine.NewDockerClient()
-	if err != nil {
-		logs.Fatal.Printf("@docker.NewClient %v", err)
-	}
+	docker := engine.Docker
 
 	http.Handle("/container/top/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Path[len("/container/top/"):]
@@ -66,9 +67,7 @@ func init() {
 		id := r.URL.Path[len("/api/container/stats/"):]
 		result, err := docker.Stats(id, util.RequestGetParamI(r, "count", 1))
 		if err != nil {
-			util.RenderJSON(w, struct {
-				Error string `json:"error"`
-			}{err.Error()}, nil)
+			renderErrorJSON(w, err)
 			return
 		}
 		util.RenderJSON(w, result, nil)
@@ -102,9 +101,7 @@ func init() {
 		}
 		meta := docker.Restart(r.URL.Path[len("/api/container/restart/"):], 5)
 		if meta.Error != nil {
-			util.RenderJSON(w, struct {
-				Error string `json:"error"`
-			}{meta.Error.Error()}, nil)
+			renderErrorJSON(w, meta.Error)
 			return
 		}
 		util.RenderJSON(w, meta.Container, nil)
@@ -117,9 +114,7 @@ func init() {
 		}
 		meta := docker.Start(r.URL.Path[len("/api/container/start/"):])
 		if meta.Error != nil {
-			util.RenderJSON(w, struct {
-				Error string `json:"error"`
-			}{meta.Error.Error()}, nil)
+			renderErrorJSON(w, meta.Error)
 			return
 		}
 		util.RenderJSON(w, meta.Container, nil)
@@ -132,9 +127,7 @@ func init() {
 		}
 		meta := docker.Stop(r.URL.Path[len("/api/container/stop/"):])
 		if meta.Error != nil {
-			util.RenderJSON(w, struct {
-				Error string `json:"error"`
-			}{meta.Error.Error()}, nil)
+			renderErrorJSON(w, meta.Error)
 			return
 		}
 		util.RenderJSON(w, meta.Container, nil)
@@ -147,9 +140,7 @@ func init() {
 		}
 		meta := docker.Kill(r.URL.Path[len("/api/container/kill/"):], 5)
 		if meta.Error != nil {
-			util.RenderJSON(w, struct {
-				Error string `json:"error"`
-			}{meta.Error.Error()}, nil)
+			renderErrorJSON(w, meta.Error)
 			return
 		}
 		util.RenderJSON(w, meta.Container, nil)
@@ -191,12 +182,106 @@ func init() {
 			r.URL.Path[len("/api/container/commit/"):],
 			repository, tag, massage, author)
 		if meta.Error != nil {
-			util.RenderJSON(w, struct {
-				Error string `json:"error"`
-			}{meta.Error.Error()}, nil)
+			renderErrorJSON(w, meta.Error)
 			return
 		}
 		util.RenderJSON(w, meta.Image, nil)
 	}))
 
+	// @see https://docs.docker.com/docker-hub/builds/#webhooks
+	type Repository struct {
+		Name     string `json:"name"`
+		Owner    string `json:"owner"`
+		RepoName string `json:"repo_name"`
+	}
+	type Webhook struct {
+		CallbackURL string     `json:"callback_url"`
+		Repository  Repository `json:"repository"`
+	}
+
+	/**
+	 * Update by DockerHub
+	 * which pull an image again & restart the container to update its service
+	 */
+	http.Handle("/api/container/update", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			http.NotFound(w, r)
+			return
+		}
+		// parse parameters
+		webhook := Webhook{}
+		err := json.NewDecoder(r.Body).Decode(&webhook)
+		if err != nil {
+			logs.Warn.Print(err)
+			http.NotFound(w, r)
+			return
+		}
+		repository, tag := parsers.ParseRepositoryTag(webhook.Repository.RepoName)
+		tag = misc.NVL(tag, "latest")
+
+		// pull the latest image
+		var imageRepoTag string
+		for _, image := range docker.ListImages() {
+			for _, repotag := range image.RepoTags {
+				if repotag == repository+":"+tag {
+					imageRepoTag = repotag
+				}
+			}
+		}
+		if misc.ZeroOrNil(imageRepoTag) {
+			http.NotFound(w, r)
+			return
+		}
+		if meta := docker.Pull(imageRepoTag); meta.Error != nil {
+			util.RenderJSON(w, meta.Error.Error(), nil)
+			return
+		}
+
+		// list running containers
+		containers, err := docker.ListContainers(models.ListContainerOption(3))
+		if err != nil {
+			util.RenderJSON(w, err.Error(), nil)
+			return
+		}
+
+		// restart its container
+		restarted := []string{}
+		for _, container := range containers {
+			if container.Image == imageRepoTag {
+				meta := docker.InspectContainer(container.ID)
+				if meta.Error != nil {
+					continue
+				}
+				// remove the existing container
+				if meta := docker.Stop(container.ID); meta.Error != nil {
+					renderErrorJSON(w, meta.Error)
+					return
+				}
+				if err := docker.Rm(container.ID); err != nil {
+					renderErrorJSON(w, err)
+					return
+				}
+				// create a new container using the dead container configurations.
+				// because if we just restart the container, its image would not
+				// reference the new one.
+				c := meta.Container
+				if meta := docker.Create(c.Name, c.Config, c.HostConfig); meta.Error != nil {
+					renderErrorJSON(w, meta.Error)
+					return
+				}
+				if meta := docker.Start(c.Name[1:]); meta.Error != nil {
+					renderErrorJSON(w, meta.Error)
+					return
+				}
+				restarted = append(restarted, c.Name[1:])
+			}
+		}
+		util.RenderJSON(w, restarted, nil)
+	}))
+}
+
+func renderErrorJSON(w http.ResponseWriter, err error) {
+	util.RenderJSON(w, struct {
+		Error string `json:"error"`
+	}{err.Error()}, nil)
 }
