@@ -9,6 +9,7 @@ type Config struct {
 	LogLevel               int
 	DockerEndpoint         string `trim:"true"`
 	DockerAPIVersion       string `trim:"true"`
+	DockerCertPath         string `trim:"true"`
 	DockerPullBeginTimeout time.Duration
 	DockerPullTimeout      time.Duration
 	DockerStatTimeout      time.Duration

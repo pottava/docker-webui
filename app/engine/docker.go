@@ -55,24 +55,31 @@ func init() {
 			logs.Debug.Printf("Docker container ID: %s", containerID)
 		}
 	}
-	err := SetDockerClient(cfg.DockerEndpoint)
+	err := SetDockerClient(cfg.DockerEndpoint, cfg.DockerCertPath)
 	if err != nil {
 		logs.Fatal.Printf("@docker.NewVersionedClient %v", err)
 	}
 }
 
 // SetDockerClient sets DockerClient if it was generated successfully
-func SetDockerClient(endpoint string) error {
-	client, err := docker.NewVersionedClient(endpoint, cfg.DockerAPIVersion)
-	if err != nil {
-		return err
+func SetDockerClient(endpoint, certPath string) (err error) {
+	var client *docker.Client
+	if misc.ZeroOrNil(certPath) {
+		client, err = docker.NewVersionedClient(endpoint, cfg.DockerAPIVersion)
+	} else {
+		cert := fmt.Sprintf("%s/cert.pem", certPath) // X.509 Certificate
+		key := fmt.Sprintf("%s/key.pem", certPath)   // Private Key
+		ca := fmt.Sprintf("%s/ca.pem", certPath)     // Certificate authority
+		client, err = docker.NewVersionedTLSClient(endpoint, cfg.DockerAPIVersion, cert, key, ca)
 	}
-	err = client.Ping()
-	if err != nil {
-		return err
+	if !misc.ZeroOrNil(client) {
+		err = client.Ping()
 	}
-	Docker = &DockerClient{client}
-	return nil
+	if misc.ZeroOrNil(err) {
+		client.SkipServerVersionCheck = true
+		Docker = &DockerClient{client}
+	}
+	return err
 }
 
 // InspectContainer inspects the docker container

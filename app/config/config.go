@@ -22,6 +22,7 @@ func defaultConfig() Config {
 		LogLevel:               4,
 		DockerEndpoint:         "unix:///var/run/docker.sock",
 		DockerAPIVersion:       "1.17",
+		DockerCertPath:         "",
 		DockerPullBeginTimeout: 3 * time.Minute,
 		DockerPullTimeout:      2 * time.Hour,
 		DockerStatTimeout:      1 * time.Second,
@@ -58,17 +59,18 @@ func environmentConfig() Config {
 		Name:                   os.Getenv("APP_NAME"),
 		Port:                   misc.ParseUint16(os.Getenv("APP_PORT")),
 		LogLevel:               misc.Atoi(os.Getenv("APP_LOG_LEVEL")),
-		DockerEndpoint:         os.Getenv("APP_DOCKER_ENDPOINT"),
-		DockerAPIVersion:       os.Getenv("APP_DOCKER_API_VERSION"),
-		DockerPullBeginTimeout: misc.ParseDuration(os.Getenv("APP_DOCKER_PULL_BEGIN_TIMEOUT")),
-		DockerPullTimeout:      misc.ParseDuration(os.Getenv("APP_DOCKER_PULL_TIMEOUT")),
-		DockerStatTimeout:      misc.ParseDuration(os.Getenv("APP_DOCKER_STAT_TIMEOUT")),
-		DockerStartTimeout:     misc.ParseDuration(os.Getenv("APP_DOCKER_START_TIMEOUT")),
-		DockerStopTimeout:      misc.ParseDuration(os.Getenv("APP_DOCKER_STOP_TIMEOUT")),
-		DockerRestartTimeout:   misc.ParseDuration(os.Getenv("APP_DOCKER_RESTART_TIMEOUT")),
-		DockerKillTimeout:      misc.ParseDuration(os.Getenv("APP_DOCKER_KILL_TIMEOUT")),
-		DockerRmTimeout:        misc.ParseDuration(os.Getenv("APP_DOCKER_RM_TIMEOUT")),
-		DockerCommitTimeout:    misc.ParseDuration(os.Getenv("APP_DOCKER_COMMIT_TIMEOUT")),
+		DockerEndpoint:         os.Getenv("DOCKER_HOST"),
+		DockerAPIVersion:       os.Getenv("DOCKER_API_VERSION"),
+		DockerCertPath:         os.Getenv("DOCKER_CERT_PATH"),
+		DockerPullBeginTimeout: misc.ParseDuration(os.Getenv("DOCKER_PULL_BEGIN_TIMEOUT")),
+		DockerPullTimeout:      misc.ParseDuration(os.Getenv("DOCKER_PULL_TIMEOUT")),
+		DockerStatTimeout:      misc.ParseDuration(os.Getenv("DOCKER_STAT_TIMEOUT")),
+		DockerStartTimeout:     misc.ParseDuration(os.Getenv("DOCKER_START_TIMEOUT")),
+		DockerStopTimeout:      misc.ParseDuration(os.Getenv("DOCKER_STOP_TIMEOUT")),
+		DockerRestartTimeout:   misc.ParseDuration(os.Getenv("DOCKER_RESTART_TIMEOUT")),
+		DockerKillTimeout:      misc.ParseDuration(os.Getenv("DOCKER_KILL_TIMEOUT")),
+		DockerRmTimeout:        misc.ParseDuration(os.Getenv("DOCKER_RM_TIMEOUT")),
+		DockerCommitTimeout:    misc.ParseDuration(os.Getenv("DOCKER_COMMIT_TIMEOUT")),
 		StaticFileHost:         os.Getenv("APP_STATIC_FILE_HOST"),
 		StaticFilePath:         os.Getenv("APP_STATIC_FILE_PATH"),
 		PreventSelfStop:        misc.ParseBool(os.Getenv("APP_PREVENT_SELF_STOP")),
@@ -145,12 +147,12 @@ func (config *Config) trimWhitespace() {
 // String returns a string representation of the config.
 func (config *Config) String() string {
 	return fmt.Sprintf(
-		"Name: %v, Port: %v, LogLevel: %v, DockerEndpoint: %v, DockerAPIVersion: %v, "+
+		"Name: %v, Port: %v, LogLevel: %v, DockerEndpoint: %v, DockerAPIVersion: %v, DockerCertPath: %v, "+
 			"DockerPullBeginTimeout: %v, DockerPullTimeout: %v, DockerStatTimeout: %v, DockerStartTimeout: %v, "+
 			"DockerStopTimeout: %v, DockerRestartTimeout: %v, DockerKillTimeout: %v, DockerRmTimeout: %v, "+
 			"DockerCommitTimeout: %v, StaticFileHost: %v, StaticFilePath: %v, PreventSelfStop: %v",
 		config.Name, config.Port, config.LogLevel,
-		config.DockerEndpoint, config.DockerAPIVersion, config.DockerPullBeginTimeout,
+		config.DockerEndpoint, config.DockerAPIVersion, config.DockerCertPath, config.DockerPullBeginTimeout,
 		config.DockerPullTimeout, config.DockerStatTimeout, config.DockerStartTimeout, config.DockerStopTimeout,
 		config.DockerRestartTimeout, config.DockerKillTimeout, config.DockerRmTimeout,
 		config.DockerCommitTimeout, config.StaticFileHost, config.StaticFilePath, config.PreventSelfStop)
