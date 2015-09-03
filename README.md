@@ -3,78 +3,27 @@ Docker Web-UI
 
 ## Description
 
-A web user-interface for [docker](https://www.docker.com/).
+A web user-interface for [docker](https://www.docker.com/).  
+([日本語はこちら](https://github.com/pottava/docker-webui/blob/master/README-ja.md))
 
-## Basic Usage
+## Usage
 
-### 1. Run as a docker container
+### 1. Run the application
 
-```shell
-$ docker run --rm -p 9000:9000 -v /var/run/docker.sock:/var/run/docker.sock pottava/docker-webui:latest
-```
+as a docker container
 
-### 2. Access the application
+`$ docker run -d -p 9000:9000 -v /var/run/docker.sock:/var/run/docker.sock pottava/docker-webui`
 
-[http://localhost:9000/](http://localhost:9000/)
+or as a go binary
 
-## Usage with Golang
+`$ go get github.com/pottava/docker-webui`  
+`$ docker-webui`
 
-### 1. Install go binary
-
-```shell
-$ go get github.com/pottava/docker-webui
-```
-
-### 2. Run this application
-
-```shell
-$ docker-webui
-```
-
-### 3. Access the application
+### 2. Access to the following URL
 
 [http://localhost:9000/](http://localhost:9000/)
 
-## Usage with VirtualBox, CoreOS & Docker containers
 
-### 1. Install VirtualBox & Vagrant
-
-- [VirtualBox](https://www.virtualbox.org/)
-- [Vagrant](http://www.vagrantup.com/)
-
-### 2. Install vagrant-hostsupdater plugin
-
-```shell
-$ vagrant plugin install vagrant-hostsupdater
-```
-
-### 3. Change your working directory to vagrant folder
-
-```shell
-$ cd /path/to/this-repository-root/vagrant
-```
-
-### 4. Create a virtual machine
-
-```shell
-$ vagrant up
-```
-
-### 5. Confirm whether a service is running
-
-[hhttp://docker-webui.local/](http://docker-webui.local/)
-
-### 6. Test the application
-
-```shell
-$ vagrant ssh -c "docker run --rm -v /home/core/share:/go/src/github.com/pottava/docker-webui pottava/docker-webui:base go test github.com/pottava/docker-webui/..."
-```
-
-### 7. Teardown the VM
-
-```shell
-$ vagrant halt
-```
 
 ## Contribution
 
