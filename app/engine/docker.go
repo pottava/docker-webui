@@ -2,7 +2,6 @@ package engine
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 	"strings"
@@ -157,26 +156,144 @@ func (c *DockerClient) Stats(id string, count int) (result []*docker.Stats, err 
 }
 
 // Logs returns containers logs
-func (c *DockerClient) Logs(id string, since, line int64) (stdout, stderr string, err error) {
-	sto := bytes.Buffer{}
-	ste := bytes.Buffer{}
-	tail := "all"
-	if line > 0 {
-		tail = fmt.Sprint(line)
+func (c *DockerClient) Logs(id string, since int64, line int, timeout time.Duration) (stdout []string, stderr []string, err error) {
+	stdout = []string{}
+	stderr = []string{}
+
+	cStdOut := make(chan string)
+	cStdErr := make(chan string)
+
+	e := make(chan error, 1)
+	done := make(chan bool)
+	go func() {
+		e <- c.LogStream(LogsOptions{
+			ID:      id,
+			Since:   since,
+			Tail:    int64(line),
+			Stdout:  cStdOut,
+			Stderr:  cStdErr,
+			Done:    done,
+			Timeout: timeout,
+		})
+		close(e)
+	}()
+
+	for {
+		select {
+		case err = <-e:
+			return
+		case log, ok := <-cStdOut:
+			if !ok {
+				err = <-e
+				return
+			}
+			stdout = append(stdout, log)
+			if (line > 0) && ((len(stdout) + len(stderr)) >= line) {
+				done <- true
+				err = <-e
+				return
+			}
+		case log, ok := <-cStdErr:
+			if !ok {
+				err = <-e
+				return
+			}
+			stderr = append(stderr, log)
+			if (line > 0) && ((len(stdout) + len(stderr)) >= line) {
+				done <- true
+				err = <-e
+				return
+			}
+		}
 	}
-	err = c.Client.Logs(docker.LogsOptions{
-		Container:    id,
-		OutputStream: &sto,
-		ErrorStream:  &ste,
-		Follow:       false,
-		Stdout:       true,
-		Stderr:       true,
-		Since:        since,
-		Timestamps:   true,
-		Tail:         tail,
-		RawTerminal:  false,
-	})
-	return sto.String(), ste.String(), err
+}
+
+// LogsOptions can be
+type LogsOptions struct {
+	ID      string
+	Since   int64
+	Tail    int64
+	Stdout  chan<- string
+	Stderr  chan<- string
+	Done    <-chan bool
+	Timeout time.Duration
+}
+
+// LogStream returns containers logs as streams
+func (c *DockerClient) LogStream(opts LogsOptions) (err error) {
+	timeout := time.After(opts.Timeout)
+	outReader, outWriter := io.Pipe()
+	errReader, errWriter := io.Pipe()
+
+	defer func() {
+		close(opts.Stdout)
+		close(opts.Stderr)
+	}()
+
+	done := make(chan bool, 1)
+	go func() {
+		tail := "all"
+		if opts.Tail > 0 {
+			tail = fmt.Sprint(opts.Tail)
+		}
+		err = c.Client.Logs(docker.LogsOptions{
+			Container:    opts.ID,
+			OutputStream: outWriter,
+			ErrorStream:  errWriter,
+			// TODO
+			// There's no way to stop this goroutine if this flag is true for now.
+			// Have to turn to true if the issue (https://github.com/fsouza/go-dockerclient/issues/298) is closed.
+			Follow:     false,
+			Stdout:     true,
+			Stderr:     true,
+			Since:      opts.Since,
+			Timestamps: true,
+			Tail:       tail,
+		})
+		outWriter.Close()
+		errWriter.Close()
+		done <- true
+		close(done)
+	}()
+
+	outDone := make(chan bool, 1)
+	go func() {
+		reader := bufio.NewReader(outReader)
+		for {
+			line, _, e := reader.ReadLine()
+			if e != nil {
+				outDone <- true
+				close(outDone)
+				return
+			}
+			opts.Stdout <- string(line)
+		}
+	}()
+	errDone := make(chan bool, 1)
+	go func() {
+		reader := bufio.NewReader(errReader)
+		for {
+			line, _, e := reader.ReadLine()
+			if e != nil {
+				errDone <- true
+				close(errDone)
+				return
+			}
+			opts.Stderr <- string(line)
+		}
+	}()
+
+	// block here waiting for the signal to stop function
+	select {
+	case <-opts.Done:
+	case <-timeout:
+	}
+	outReader.Close()
+	errReader.Close()
+	<-done
+	<-outDone
+	<-errDone
+	return
 }
 
 // Changes returns containers changed files

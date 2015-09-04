@@ -1,4 +1,4 @@
-{{ define "title" }}{{ .Data.ID }} statistics &amps; logs | {{ .AppName }}{{ end }}
+{{ define "title" }}{{ .Data.ID }} statistics & logs | {{ .AppName }}{{ end }}
 {{ define "css" }}<link rel="stylesheet" href="{{ .StaticFileHost }}/assets/css/app/index.css">{{ end }}
 {{ define "js" }}<script type="text/jsx" src="{{ .StaticFileHost }}/assets/js/containers/statlog.jsx"></script>{{ end }}
 {{ define "content" }}
@@ -18,7 +18,7 @@
 
   <div style="position: relative;">
     <h2 style="margin: 25px 0 20px 0;">Logs of {{ .Data.ID }}</h2>
-    <div style="position: absolute;top: 40px;right: 10px;">
+    <div class="logs" style="position: absolute;top: 40px;right: 10px;display: none;">
       <div class="btn-group">
         <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" style="margin: 0 5px 0 0;">
           <span class="caption">refresh / 1 sec</span>&nbsp;
@@ -49,6 +49,6 @@
     </div>
   </div>
 
-  <div id="logs" style="overflow-y: auto;clear: both;"></div>
+  <div id="logs" class="logs" style="overflow-y: auto;clear: both;display: none;"></div>
 
 {{ end }}

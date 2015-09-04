@@ -183,9 +183,12 @@ var LogTable = React.createClass({
   load: function(sender) {
     var id = $('#container-id').val(), data = {count: log_conf.count};
     app.func.ajax({type: 'GET', url: '/api/container/logs/'+id, data: data, success: function (data) {
+      if (data.error) {
+        sender.setState({data: []});
+        return;
+      }
       var stream = [];
-      $.map(data.stdout.split('\n'), function (record) {
-        if (! record) return;
+      $.map(data.stdout, function (record) {
         stream.push({
           type: 'stdlog',
           key: record.substring(0, 30),
@@ -193,8 +196,7 @@ var LogTable = React.createClass({
           log: record.substring(31)
         });
       });
-      $.map(data.stderr.split('\n'), function (record) {
-        if (! record) return;
+      $.map(data.stderr, function (record) {
         stream.push({
           type: 'stderr',
           key: record.substring(0, 30),
@@ -202,7 +204,13 @@ var LogTable = React.createClass({
           log: record.substring(31)
         });
       });
+      stream.sort(function (a, b) {
+        var diff = new Date(a.key.substring(0, 19)+'Z') - new Date(b.key.substring(0, 19)+'Z');
+        if (diff != 0) return diff;
+        return parseInt(a.key.substring(20), 10) - parseInt(b.key.substring(20), 10);
+      })
       sender.setState({data: stream});
+      $('.logs').fadeIn();
     }});
   },
   componentDidMount: function() {
@@ -212,9 +220,10 @@ var LogTable = React.createClass({
     this.load(this);
   },
   render: function() {
-    var rows = this.state.data.map(function(record, index) {
+    var rows = [];
+    this.state.data.map(function(record, index) {
       if (! record.log) return;
-      return <LogTableRow key={record.key} index={index} content={record} />
+      rows.push(<LogTableRow key={record.key} index={index} content={record} />)
     });
     return (
         <table className="table table-striped table-hover">

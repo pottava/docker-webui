@@ -78,14 +78,18 @@ func init() {
 		since := time.Now().Add(time.Duration(util.RequestGetParamI(r, "prev", 5)*-1) * time.Second).UnixNano()
 		count := util.RequestGetParamI(r, "count", 100)
 
-		stdout, stderr, err := docker.Logs(id, since, int64(count))
+		stdout, stderr, err := docker.Logs(id, since, count, 2*time.Second)
+		if err != nil {
+			renderErrorJSON(w, err)
+			return
+		}
 		util.RenderJSON(w, struct {
-			Stdout string `json:"stdout"`
-			Stderr string `json:"stderr"`
+			Stdout []string `json:"stdout"`
+			Stderr []string `json:"stderr"`
 		}{
 			stdout,
 			stderr,
-		}, err)
+		}, nil)
 	}))
 	// diff
 	http.Handle("/api/container/changes/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
