@@ -20,6 +20,12 @@ type DockerContainer struct {
 	Names      []string         `json:"names,omitempty"`
 }
 
+// DockerStats represents a container's stats
+type DockerStats struct {
+	Name  string
+	Stats []*docker.Stats
+}
+
 // ListContainerOption returns docker.ListContainersOptions according to the flag
 // @param flag int (0: all, 1: created, 2: restarting, 3: running, 4: paused, 5&6: exited)
 func ListContainerOption(flag int) docker.ListContainersOptions {

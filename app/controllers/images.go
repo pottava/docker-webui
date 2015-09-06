@@ -20,7 +20,7 @@ func init() {
 	}))
 
 	/**
-	 * Images
+	 * Images' API
 	 * @param q string search words
 	 * @return []model.DockerImage
 	 */
@@ -33,6 +33,9 @@ func init() {
 		util.RenderJSON(w, models.SearchImages(images, words), nil)
 	}))
 
+	/**
+	 * An image's API
+	 */
 	// inspect
 	http.Handle("/api/image/inspect/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Path[len("/api/image/inspect/"):]

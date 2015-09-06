@@ -98,7 +98,7 @@ var StatTableRow = React.createClass({
         in: app.func.byteFormat(stat.network.rx_bytes),
         out: app.func.byteFormat(stat.network.tx_bytes),
         inPacket: stat.network.rx_packets,
-        outPacket: stat.network.tx_packets,
+        outPacket: stat.network.tx_packets
       };
     }
     return (
@@ -141,7 +141,7 @@ var StatTable = React.createClass({
     var data = this.state.data, rows = [];
     $.map(data.current, function (current, index) {
       rows.push(<StatTableRow index={index} content={{previous: data.previous[index], current: current}} />)
-    })
+    });
     return (
         <table className="table table-striped table-hover">
           <thead>

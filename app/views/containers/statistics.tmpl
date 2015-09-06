@@ -1,0 +1,26 @@
+{{ define "title" }} stats | {{ .AppName }}{{ end }}
+{{ define "css" }}
+<link rel="stylesheet" href="{{ .StaticFileHost }}/assets/css/lib/nv.d3.css">
+<link rel="stylesheet" href="{{ .StaticFileHost }}/assets/css/app/index.css">
+{{ end }}
+{{ define "js" }}
+<script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/d3.min.js"></script>
+<script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/nv.d3.min.js"></script>
+<script type="text/jsx" src="{{ .StaticFileHost }}/assets/js/containers/statistics.jsx"></script>
+{{ end }}
+{{ define "content" }}
+
+  <div id="chart-cpu" style="margin-top: 25px;clear: both;">
+    <h4 style="margin: 0;">CPU</h4>
+    <svg class="pie-charts" style="height: 200px;width: 25%;margin: 0;float: left;"></svg>
+    <svg class="line-charts" style="height: 200px;width: 70%;margin: 0;float: left;"></svg>
+  </div>
+  <div id="chart-mem" style="margin-top: -20px;clear: both;">
+    <h4 style="margin-bottom: 0;">Memory</h4>
+    <svg class="pie-charts" style="height: 200px;width: 25%;margin: 0;float: left;"></svg>
+    <svg class="line-charts" style="height: 200px;width: 70%;margin: 0;float: left;"></svg>
+  </div>
+
+  <div id="data" style="clear: both;"></div>
+
+{{ end }}

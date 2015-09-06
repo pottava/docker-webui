@@ -4,9 +4,11 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/pkg/parsers"
+	api "github.com/fsouza/go-dockerclient"
 
 	"github.com/pottava/docker-webui/app/engine"
 	util "github.com/pottava/docker-webui/app/http"
@@ -30,9 +32,12 @@ func init() {
 		id := r.URL.Path[len("/container/changes/"):]
 		util.RenderHTML(w, []string{"containers/changes.tmpl"}, struct{ ID string }{id}, nil)
 	}))
+	http.Handle("/statistics", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+		util.RenderHTML(w, []string{"containers/statistics.tmpl"}, nil, nil)
+	}))
 
 	/**
-	 * Containers
+	 * Containers' API
 	 * @param limit int
 	 * @param status int (0: all, 1: created, 2: restarting, 3: running, 4: paused, 5&6: exited)
 	 * @param q string search words
@@ -49,7 +54,35 @@ func init() {
 		}
 		util.RenderJSON(w, models.SearchContainers(containers, words), err)
 	}))
+	http.Handle("/api/statistics", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+		containers, err := docker.ListContainers(models.ListContainerOption(3))
+		if err != nil {
+			util.RenderJSON(w, err.Error(), nil)
+			return
+		}
+		c := make(chan models.DockerStats, len(containers))
+		count := util.RequestGetParamI(r, "count", 1)
+		stats := map[string][]*api.Stats{}
 
+		for _, container := range containers {
+			go func(container api.APIContainers) {
+				stat, _ := docker.Stats(container.ID, count)
+				c <- models.DockerStats{
+					Name:  strings.Join(container.Names, ","),
+					Stats: stat,
+				}
+			}(container)
+		}
+		for i := 0; i < len(containers); i++ {
+			ds := <-c
+			stats[ds.Name] = ds.Stats
+		}
+		util.RenderJSON(w, stats, nil)
+	}))
+
+	/**
+	 * A container's API
+	 */
 	// inspect
 	http.Handle("/api/container/inspect/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Path[len("/api/container/inspect/"):]
@@ -78,7 +111,7 @@ func init() {
 		since := time.Now().Add(time.Duration(util.RequestGetParamI(r, "prev", 5)*-1) * time.Second).UnixNano()
 		count := util.RequestGetParamI(r, "count", 100)
 
-		stdout, stderr, err := docker.Logs(id, since, count, 2*time.Second)
+		stdout, stderr, err := docker.Logs(id, since, count, 1*time.Second)
 		if err != nil {
 			renderErrorJSON(w, err)
 			return

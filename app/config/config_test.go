@@ -40,7 +40,7 @@ func TestMerge(t *testing.T) {
 		DockerCertPath:         "",
 		DockerPullBeginTimeout: 3 * time.Minute,
 		DockerPullTimeout:      2 * time.Hour,
-		DockerStatTimeout:      1 * time.Second,
+		DockerStatTimeout:      5 * time.Second,
 		DockerStartTimeout:     10 * time.Second,
 		DockerStopTimeout:      10 * time.Second,
 		DockerRestartTimeout:   10 * time.Second,

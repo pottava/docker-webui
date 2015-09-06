@@ -229,7 +229,7 @@ var TableRow = React.createClass({
               </a>
               <ul className="dropdown-menu">
                 <li><a onClick={this.inspect}>inspect</a></li>
-                <li><a onClick={this.processes}>processes</a></li>
+                <li><a onClick={this.processes}>processes (top)</a></li>
                 <li><a onClick={this.statlog}>stats & logs</a></li>
                 <li><a onClick={this.changes}>changes (diff)</a></li>
                 <li><a onClick={this.rename}>rename</a></li>

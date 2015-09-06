@@ -59,6 +59,14 @@ td.to_right {
   padding: 8px 3px;
 }
 
+.separator {
+  margin-top: 21.75px;
+  margin-bottom: 21.75px;
+  padding-top: 7.25px;
+  padding-bottom: 7.25px;
+  color: silver;
+}
+
 pre {
   font-family: monospace;
   font-size: 13px;
