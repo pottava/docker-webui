@@ -7,9 +7,8 @@ type Config struct {
 	Name                   string `trim:"true"`
 	Port                   uint16
 	LogLevel               int
-	DockerEndpoint         string `trim:"true"`
-	DockerAPIVersion       string `trim:"true"`
-	DockerCertPath         string `trim:"true"`
+	DockerEndpoints        []string
+	DockerCertPath         []string
 	DockerPullBeginTimeout time.Duration
 	DockerPullTimeout      time.Duration
 	DockerStatTimeout      time.Duration

@@ -7,7 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/docker/pkg/parsers"
 	api "github.com/fsouza/go-dockerclient"
 
 	"github.com/pottava/docker-webui/app/engine"
@@ -18,19 +17,21 @@ import (
 )
 
 func init() {
-	docker := engine.Docker
 
 	http.Handle("/container/top/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Path[len("/container/top/"):]
-		util.RenderHTML(w, []string{"containers/top.tmpl"}, struct{ ID string }{id}, nil)
+		client, _ := util.RequestGetParam(r, "client")
+		util.RenderHTML(w, []string{"containers/top.tmpl"}, struct{ ID, Client string }{id, client}, nil)
 	}))
 	http.Handle("/container/statlog/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Path[len("/container/statlog/"):]
-		util.RenderHTML(w, []string{"containers/statlog.tmpl"}, struct{ ID string }{id}, nil)
+		client, _ := util.RequestGetParam(r, "client")
+		util.RenderHTML(w, []string{"containers/statlog.tmpl"}, struct{ ID, Client string }{id, client}, nil)
 	}))
 	http.Handle("/container/changes/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Path[len("/container/changes/"):]
-		util.RenderHTML(w, []string{"containers/changes.tmpl"}, struct{ ID string }{id}, nil)
+		client, _ := util.RequestGetParam(r, "client")
+		util.RenderHTML(w, []string{"containers/changes.tmpl"}, struct{ ID, Client string }{id, client}, nil)
 	}))
 	http.Handle("/statistics", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		util.RenderHTML(w, []string{"containers/statistics.tmpl"}, nil, nil)
@@ -44,39 +45,92 @@ func init() {
 	 * @return []model.DockerContainer
 	 */
 	http.Handle("/api/containers", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		options := models.ListContainerOption(util.RequestGetParamI(r, "status", 0))
-		options.Limit = util.RequestGetParamI(r, "limit", 100)
-
-		containers, err := docker.ListContainers(options)
-		var words []string
-		if q, found := util.RequestGetParam(r, "q"); found {
-			words = util.SplittedUpperStrings(q)
+		type container struct {
+			Client     *models.DockerClient     `json:"client"`
+			Containers []models.DockerContainer `json:"containers"`
 		}
-		util.RenderJSON(w, models.SearchContainers(containers, words), err)
-	}))
-	http.Handle("/api/statistics", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		containers, err := docker.ListContainers(models.ListContainerOption(3))
-		if err != nil {
-			util.RenderJSON(w, err.Error(), nil)
+		dockers, ok := clients(w)
+		if !ok {
 			return
 		}
-		c := make(chan models.DockerStats, len(containers))
-		count := util.RequestGetParamI(r, "count", 1)
-		stats := map[string][]*api.Stats{}
+		options := models.ListContainerOption(util.RequestGetParamI(r, "status", 0))
+		options.Limit = util.RequestGetParamI(r, "limit", 100)
+		d := make(chan *container, len(dockers))
+		result := []*container{}
 
-		for _, container := range containers {
-			go func(container api.APIContainers) {
-				stat, _ := docker.Stats(container.ID, count)
-				c <- models.DockerStats{
-					Name:  strings.Join(container.Names, ","),
-					Stats: stat,
+		for _, docker := range dockers {
+			go func(docker *engine.Client) {
+				containers, err := docker.ListContainers(options)
+				if err != nil {
+					renderErrorJSON(w, err)
+					return
 				}
-			}(container)
+				var words []string
+				if q, found := util.RequestGetParam(r, "q"); found {
+					words = util.SplittedUpperStrings(q)
+				}
+				d <- &container{
+					Client:     docker.Conf,
+					Containers: models.SearchContainers(containers, words),
+				}
+			}(docker)
 		}
-		for i := 0; i < len(containers); i++ {
-			ds := <-c
-			stats[ds.Name] = ds.Stats
+		for i := 0; i < len(dockers); i++ {
+			containers := <-d
+			result = append(result, containers)
 		}
+		close(d)
+		util.RenderJSON(w, result, nil)
+	}))
+
+	http.Handle("/api/statistics", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+		dockers, ok := clients(w)
+		if !ok {
+			return
+		}
+		type statistics struct {
+			Client *models.DockerClient    `json:"client"`
+			Stats  map[string][]*api.Stats `json:"stats"`
+		}
+		stats := []statistics{}
+
+		d := make(chan statistics, len(dockers))
+		for _, docker := range dockers {
+			go func(docker *engine.Client) {
+				containers, err := docker.ListContainers(models.ListContainerOption(3))
+				if err != nil {
+					renderErrorJSON(w, err)
+					return
+				}
+				c := make(chan models.DockerStats, len(containers))
+				inner := map[string][]*api.Stats{}
+				count := util.RequestGetParamI(r, "count", 1)
+
+				for _, container := range containers {
+					go func(container api.APIContainers) {
+						stat, _ := docker.Stats(container.ID, count)
+						c <- models.DockerStats{
+							Name:  strings.Join(container.Names, ","),
+							Stats: stat,
+						}
+					}(container)
+				}
+				for i := 0; i < len(containers); i++ {
+					ds := <-c
+					inner[ds.Name] = ds.Stats
+				}
+				close(c)
+				d <- statistics{
+					Client: docker.Conf,
+					Stats:  inner,
+				}
+			}(docker)
+		}
+		for i := 0; i < len(dockers); i++ {
+			inner := <-d
+			stats = append(stats, inner)
+		}
+		close(d)
 		util.RenderJSON(w, stats, nil)
 	}))
 
@@ -85,49 +139,57 @@ func init() {
 	 */
 	// inspect
 	http.Handle("/api/container/inspect/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		id := r.URL.Path[len("/api/container/inspect/"):]
-		meta := docker.InspectContainer(id)
-		util.RenderJSON(w, meta.Container, meta.Error)
+		if docker, ok := client(w, util.RequestGetParamS(r, "client", "")); ok {
+			id := r.URL.Path[len("/api/container/inspect/"):]
+			meta := docker.InspectContainer(id)
+			util.RenderJSON(w, meta.Container, meta.Error)
+		}
 	}))
 	// top
 	http.Handle("/api/container/top/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		id := r.URL.Path[len("/api/container/top/"):]
-		args := util.RequestGetParamS(r, "args", "aux")
-		util.RenderJSON(w, docker.Top(id, args), nil)
+		if docker, ok := client(w, util.RequestGetParamS(r, "client", "")); ok {
+			id := r.URL.Path[len("/api/container/top/"):]
+			args := util.RequestGetParamS(r, "args", "aux")
+			util.RenderJSON(w, docker.Top(id, args), nil)
+		}
 	}))
 	// stats
 	http.Handle("/api/container/stats/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		id := r.URL.Path[len("/api/container/stats/"):]
-		result, err := docker.Stats(id, util.RequestGetParamI(r, "count", 1))
-		if err != nil {
-			renderErrorJSON(w, err)
-			return
+		if docker, ok := client(w, util.RequestGetParamS(r, "client", "")); ok {
+			id := r.URL.Path[len("/api/container/stats/"):]
+			result, err := docker.Stats(id, util.RequestGetParamI(r, "count", 1))
+			if err != nil {
+				renderErrorJSON(w, err)
+				return
+			}
+			util.RenderJSON(w, result, nil)
 		}
-		util.RenderJSON(w, result, nil)
 	}))
 	// logs
 	http.Handle("/api/container/logs/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		id := r.URL.Path[len("/api/container/logs/"):]
-		since := time.Now().Add(time.Duration(util.RequestGetParamI(r, "prev", 5)*-1) * time.Second).UnixNano()
-		count := util.RequestGetParamI(r, "count", 100)
-
-		stdout, stderr, err := docker.Logs(id, since, count, 1*time.Second)
-		if err != nil {
-			renderErrorJSON(w, err)
-			return
+		if docker, ok := client(w, util.RequestGetParamS(r, "client", "")); ok {
+			id := r.URL.Path[len("/api/container/logs/"):]
+			count := util.RequestGetParamI(r, "count", 100)
+			stdout, stderr, err := docker.Logs(id, count, 1*time.Second)
+			if err != nil {
+				renderErrorJSON(w, err)
+				return
+			}
+			util.RenderJSON(w, struct {
+				Stdout []string `json:"stdout"`
+				Stderr []string `json:"stderr"`
+			}{
+				stdout,
+				stderr,
+			}, nil)
 		}
-		util.RenderJSON(w, struct {
-			Stdout []string `json:"stdout"`
-			Stderr []string `json:"stderr"`
-		}{
-			stdout,
-			stderr,
-		}, nil)
 	}))
 	// diff
 	http.Handle("/api/container/changes/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		id := r.URL.Path[len("/api/container/changes/"):]
-		util.RenderJSON(w, docker.Changes(id), nil)
+		if docker, ok := client(w, util.RequestGetParamS(r, "client", "")); ok {
+			id := r.URL.Path[len("/api/container/changes/"):]
+			util.RenderJSON(w, docker.Changes(id), nil)
+		}
 	}))
 
 	// restart
@@ -136,12 +198,14 @@ func init() {
 			http.NotFound(w, r)
 			return
 		}
-		meta := docker.Restart(r.URL.Path[len("/api/container/restart/"):], 5)
-		if meta.Error != nil {
-			renderErrorJSON(w, meta.Error)
-			return
+		if docker, ok := client(w, util.RequestPostParamS(r, "client", "")); ok {
+			meta := docker.Restart(r.URL.Path[len("/api/container/restart/"):], 5)
+			if meta.Error != nil {
+				renderErrorJSON(w, meta.Error)
+				return
+			}
+			util.RenderJSON(w, meta.Container, nil)
 		}
-		util.RenderJSON(w, meta.Container, nil)
 	}))
 	// start
 	http.Handle("/api/container/start/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
@@ -149,12 +213,14 @@ func init() {
 			http.NotFound(w, r)
 			return
 		}
-		meta := docker.Start(r.URL.Path[len("/api/container/start/"):])
-		if meta.Error != nil {
-			renderErrorJSON(w, meta.Error)
-			return
+		if docker, ok := client(w, util.RequestPostParamS(r, "client", "")); ok {
+			meta := docker.Start(r.URL.Path[len("/api/container/start/"):])
+			if meta.Error != nil {
+				renderErrorJSON(w, meta.Error)
+				return
+			}
+			util.RenderJSON(w, meta.Container, nil)
 		}
-		util.RenderJSON(w, meta.Container, nil)
 	}))
 	// stop
 	http.Handle("/api/container/stop/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
@@ -162,12 +228,14 @@ func init() {
 			http.NotFound(w, r)
 			return
 		}
-		meta := docker.Stop(r.URL.Path[len("/api/container/stop/"):])
-		if meta.Error != nil {
-			renderErrorJSON(w, meta.Error)
-			return
+		if docker, ok := client(w, util.RequestPostParamS(r, "client", "")); ok {
+			meta := docker.Stop(r.URL.Path[len("/api/container/stop/"):])
+			if meta.Error != nil {
+				renderErrorJSON(w, meta.Error)
+				return
+			}
+			util.RenderJSON(w, meta.Container, nil)
 		}
-		util.RenderJSON(w, meta.Container, nil)
 	}))
 	// kill
 	http.Handle("/api/container/kill/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
@@ -175,12 +243,14 @@ func init() {
 			http.NotFound(w, r)
 			return
 		}
-		meta := docker.Kill(r.URL.Path[len("/api/container/kill/"):], 5)
-		if meta.Error != nil {
-			renderErrorJSON(w, meta.Error)
-			return
+		if docker, ok := client(w, util.RequestPostParamS(r, "client", "")); ok {
+			meta := docker.Kill(r.URL.Path[len("/api/container/kill/"):], 5)
+			if meta.Error != nil {
+				renderErrorJSON(w, meta.Error)
+				return
+			}
+			util.RenderJSON(w, meta.Container, nil)
 		}
-		util.RenderJSON(w, meta.Container, nil)
 	}))
 	// rm
 	http.Handle("/api/container/rm/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
@@ -188,41 +258,54 @@ func init() {
 			http.NotFound(w, r)
 			return
 		}
-		err := docker.Rm(r.URL.Path[len("/api/container/rm/"):])
-		message := "removed successfully."
-		if err != nil {
-			message = err.Error()
+		if docker, ok := client(w, util.RequestPostParamS(r, "client", "")); ok {
+			err := docker.Rm(r.URL.Path[len("/api/container/rm/"):])
+			if err != nil {
+				renderErrorJSON(w, err)
+				return
+			}
+			util.RenderJSON(w, "removed successfully.", nil)
 		}
-		util.RenderJSON(w, message, nil)
 	}))
 	// rename
 	http.Handle("/api/container/rename/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		if name, found := util.RequestPostParam(r, "name"); found {
-			err := docker.Rename(r.URL.Path[len("/api/container/rename/"):], name)
-			message := "renamed successfully."
-			if err != nil {
-				message = err.Error()
-			}
-			util.RenderJSON(w, message, nil)
+		if r.Method != "POST" {
+			http.NotFound(w, r)
 			return
 		}
-		http.NotFound(w, r)
+		if docker, ok := client(w, util.RequestPostParamS(r, "client", "")); ok {
+			if name, found := util.RequestPostParam(r, "name"); found {
+				err := docker.Rename(r.URL.Path[len("/api/container/rename/"):], name)
+				message := "renamed successfully."
+				if err != nil {
+					message = err.Error()
+				}
+				util.RenderJSON(w, message, nil)
+				return
+			}
+		}
 	}))
 	// commit
 	http.Handle("/api/container/commit/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		repository, _ := util.RequestPostParam(r, "repo")
-		tag, _ := util.RequestPostParam(r, "tag")
-		massage, _ := util.RequestPostParam(r, "msg")
-		author, _ := util.RequestPostParam(r, "author")
-
-		meta := docker.Commit(
-			r.URL.Path[len("/api/container/commit/"):],
-			repository, tag, massage, author)
-		if meta.Error != nil {
-			renderErrorJSON(w, meta.Error)
+		if r.Method != "POST" {
+			http.NotFound(w, r)
 			return
 		}
-		util.RenderJSON(w, meta.Image, nil)
+		if docker, ok := client(w, util.RequestPostParamS(r, "client", "")); ok {
+			repository, _ := util.RequestPostParam(r, "repo")
+			tag, _ := util.RequestPostParam(r, "tag")
+			massage, _ := util.RequestPostParam(r, "msg")
+			author, _ := util.RequestPostParam(r, "author")
+
+			meta := docker.Commit(
+				r.URL.Path[len("/api/container/commit/"):],
+				repository, tag, massage, author)
+			if meta.Error != nil {
+				renderErrorJSON(w, meta.Error)
+				return
+			}
+			util.RenderJSON(w, meta.Image, nil)
+		}
 	}))
 
 	// @see https://docs.docker.com/docker-hub/builds/#webhooks
@@ -253,8 +336,14 @@ func init() {
 			http.NotFound(w, r)
 			return
 		}
-		repository, tag := parsers.ParseRepositoryTag(webhook.Repository.RepoName)
+		repository, tag := api.ParseRepositoryTag(webhook.Repository.RepoName)
 		tag = misc.NVL(tag, "latest")
+
+		// TODO trying all docker clients!!
+		docker, ok := client(w, util.RequestPostParamS(r, "client", ""))
+		if !ok {
+			return
+		}
 
 		// pull the latest image
 		var imageRepoTag string

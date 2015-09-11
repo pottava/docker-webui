@@ -2,7 +2,7 @@
 # # vi: set ft=ruby :
 require 'fileutils'
 
-$app_name = ENV["APP_NAME"] || "docker-webui.local"
+$app_name = ENV["APP_NAME"] || "docker-webui.localhost.com"
 $coreos_ip = ENV["IPADDRESS"] || "192.168.100.4"
 $coreos_channel = "stable"
 

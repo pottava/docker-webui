@@ -35,9 +35,8 @@ func TestMerge(t *testing.T) {
 		Name:                   "Test",
 		Port:                   8080,
 		LogLevel:               6,
-		DockerEndpoint:         "unix:///var/run/docker.sock",
-		DockerAPIVersion:       "1.17",
-		DockerCertPath:         "",
+		DockerEndpoints:        []string{"unix:///var/run/docker.sock"},
+		DockerCertPath:         []string{""},
 		DockerPullBeginTimeout: 3 * time.Minute,
 		DockerPullTimeout:      2 * time.Hour,
 		DockerStatTimeout:      5 * time.Second,
@@ -64,7 +63,7 @@ func TestComplete(t *testing.T) {
 		return
 	}
 	actual = *actual.merge(Config{
-		DockerCertPath: "cert-path",
+		DockerCertPath: []string{"cert-path"},
 		StaticFileHost: "cdn-host",
 	})
 	if !actual.complete() {

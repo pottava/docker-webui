@@ -16,20 +16,20 @@ $(document).ready(function () {
     $(this).addClass($(this).attr('data-hover'));
   }, function () {
     $(this).removeClass($(this).attr('data-hover'));
-  }).click(function () {
+  }).click(function (e) {
     _action(parseInt($(this).blur().attr('href').substring(1), 10));
-    return false;
+    app.func.stop(e);
   });
 
   setRefreshWindow(log_conf.refresh);
-  $('#refresh-window a').click(function() {
+  $('#refresh-window a').click(function(e) {
     setRefreshWindow(parseInt($(this).attr('href').substring(1), 10));
-    return false;
+    app.func.stop(e);
   });
   setMonitoringCount(log_conf.count);
-  $('#monitoring-count a').click(function() {
+  $('#monitoring-count a').click(function(e) {
     setMonitoringCount(parseInt($(this).attr('href').substring(1), 10));
-    return false;
+    app.func.stop(e);
   });
   setInterval(function () {stat_table && stat_table.setProps();}, 1000);
   refreshLogs();
@@ -119,8 +119,10 @@ var StatTable = React.createClass({
     return {data: {previous: [], current: []}};
   },
   load: function(sender) {
-    var id = $('#container-id').val();
-    app.func.ajax({type: 'GET', url: '/api/container/stats/'+id, success: function (data) {
+    var id = $('#container-id').val(),
+        client = $('#client-id').val();
+    client = client ? '?client='+client : '';
+    app.func.ajax({type: 'GET', url: '/api/container/stats/'+id+client, success: function (data) {
       if (data.error) {
         statistics.previous = true;
         statistics.current = data;
@@ -181,7 +183,10 @@ var LogTable = React.createClass({
     return {data: []};
   },
   load: function(sender) {
-    var id = $('#container-id').val(), data = {count: log_conf.count};
+    var id = $('#container-id').val(),
+        client = $('#client-id').val(),
+        data = {count: log_conf.count};
+    if (client) data.client = client;
     app.func.ajax({type: 'GET', url: '/api/container/logs/'+id, data: data, success: function (data) {
       if (data.error) {
         sender.setState({data: []});

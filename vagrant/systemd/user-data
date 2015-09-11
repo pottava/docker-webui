@@ -6,6 +6,21 @@ coreos:
     reboot-strategy: off
 
   units:
+    - name: docker-tcp.socket
+      command: start
+      enable: true
+      content: |
+        [Unit]
+        Description=Docker Socket for the API
+
+        [Socket]
+        ListenStream=2375
+        BindIPv6Only=both
+        Service=docker.service
+
+        [Install]
+        WantedBy=sockets.target
+
     - name: ap.service
       command: start
       content: |
@@ -25,10 +40,3 @@ coreos:
                       pottava/docker-webui:base \
                       go run /go/src/github.com/pottava/docker-webui/main.go
         ExecStop=/usr/bin/docker kill ap
-
-write_files:
-  - path: /etc/resolv.conf
-    permissions: 0644
-    owner: root
-    content: |
-      nameserver 8.8.8.8

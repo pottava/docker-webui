@@ -109,6 +109,13 @@ var Table = React.createClass({
   load: function(sender) {
     var self = this;
     app.func.ajax({type: 'GET', url: '/api/statistics', success: function (data) {
+      data.sort(function (a, b) {
+        if (a.client.endpoint < b.client.endpoint)
+          return -1;
+        if (a.client.endpoint > b.client.endpoint)
+          return 1;
+        return 0;
+      });
       if (data.error) {
         statistics.previous = true;
         statistics.current = data;
@@ -121,26 +128,33 @@ var Table = React.createClass({
       setTimeout(function () {table.setProps();}, 1000);
 
       // change data format for charts
-      var pie = {CPU: [], Mem: []};
-      $.map(data, function (record, key) {
-        var name = key.substring(1).replace(',/', ', '),
-            stat = record && record[0],
-            time = new Date(stat.read.substring(0, 19)+'Z').getTime(),
-            prev = statistics.previous && statistics.previous[key] && statistics.previous[key][0],
-            cpu_delta = 0, system_delta = 0, cpu_percent = 0, mem_percent = 0;
-        if (prev && stat && stat.cpu_stats) {
-          cpu_delta = stat.cpu_stats.cpu_usage.total_usage - prev.cpu_stats.cpu_usage.total_usage;
-          system_delta = stat.cpu_stats.system_cpu_usage - prev.cpu_stats.system_cpu_usage;
-        }
-        if ((system_delta > 0) && (cpu_delta > 0)) {
-          cpu_percent = 100.0 * cpu_delta / system_delta * stat.cpu_stats.cpu_usage.percpu_usage.length;
-        }
-        if (stat) mem_percent = stat.memory_stats.usage * 100 / stat.memory_stats.limit;
+      var pie = {CPU: [], Mem: []}, multiple = (data.length > 1);
+      $.map(data, function (host, index) {
+        var client = host.client;
 
-        _setStoredData(storedCPUs, name, [time, cpu_percent]);
-        pie.CPU.push({label: name, value: cpu_percent});
-        _setStoredData(storedMems, name, [time, mem_percent]);
-        pie.Mem.push({label: name, value: mem_percent});
+        $.map(host.stats, function (record, key) {
+          var name = key.substring(1).replace(',/', ', ') + _endpoint(multiple, client.endpoint),
+              stat = record && record[0],
+              time = new Date(stat.read.substring(0, 19)+'Z').getTime(),
+              prev = _findPrivious(client.endpoint, key),
+              cpu_delta = 0, system_delta = 0, cpu_percent = 0, mem_percent = 0;
+          if (prev && (prev.length > 0)) {
+            prev = prev[0];
+          }
+          if (prev && stat && stat.cpu_stats) {
+            cpu_delta = stat.cpu_stats.cpu_usage.total_usage - prev.cpu_stats.cpu_usage.total_usage;
+            system_delta = stat.cpu_stats.system_cpu_usage - prev.cpu_stats.system_cpu_usage;
+          }
+          if ((system_delta > 0) && (cpu_delta > 0)) {
+            cpu_percent = 100.0 * cpu_delta / system_delta * stat.cpu_stats.cpu_usage.percpu_usage.length;
+          }
+          if (stat) mem_percent = stat.memory_stats.usage * 100 / stat.memory_stats.limit;
+
+          _setStoredData(storedCPUs, name, [time, cpu_percent]);
+          pie.CPU.push({label: name, value: cpu_percent});
+          _setStoredData(storedMems, name, [time, mem_percent]);
+          pie.Mem.push({label: name, value: mem_percent});
+        });
       });
       // draw line-charts
       nv.addGraph(function() {
@@ -181,9 +195,18 @@ var Table = React.createClass({
     this.load(this);
   },
   render: function() {
-    var data = this.state.data, rows = [];
-    $.map(data.current, function (current, key) {
-      rows.push(<TableRow index={key} content={{name: key, previous: data.previous[key], current: current}} />)
+    var data = this.state.data, rows = [], multiple = (data.current.length > 1);
+    $.map(data.current, function (host, index) {
+      var client = host.client;
+
+      $.map(host.stats, function (current, key) {
+        var name = key + _endpoint(multiple, client.endpoint);
+        rows.push(<TableRow key={key+'@'+client.id} index={key+'@'+index} content={{
+          name: name,
+          previous: _findPrivious(client.endpoint, key),
+          current: current
+        }} />)
+      });
     });
     return (
         <table className="table table-striped table-hover">
@@ -202,5 +225,20 @@ var Table = React.createClass({
     );
   }
 });
+
+function _endpoint(multiple, endpoint) {
+  return (multiple ? ' @'+endpoint.replace(/^.*:\/\//, '').replace(/:.*$/, '') : '');
+}
+
+function _findPrivious(endpoint, key) {
+  var result = false;
+  if (statistics.previous) {
+    $.map(statistics.previous, function (host) {
+      if (host.client.endpoint == endpoint)
+        result = host.stats[key];
+    });
+  }
+  return result;
+}
 
 table = React.render(<Table />, document.getElementById('data'));

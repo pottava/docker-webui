@@ -2,10 +2,10 @@
 {{ define "css" }}<link rel="stylesheet" href="{{ .StaticFileHost }}/assets/css/app/index.css">{{ end }}
 {{ define "js" }}<script type="text/jsx" src="{{ .StaticFileHost }}/assets/js/containers/top.jsx"></script>{{ end }}
 {{ define "content" }}
-
-  <h2 style="margin: 25px 0 20px 0;">Top of {{ .Data.ID }}</h2>
+  <input id="client-id" type="hidden" value="{{ .Data.Client }}">
   <input id="container-id" type="hidden" value="{{ .Data.ID }}">
 
+  <h2 style="margin: 25px 0 20px 0;">Top of {{ .Data.ID }}</h2>
   <div id="data"></div>
 
 {{ end }}

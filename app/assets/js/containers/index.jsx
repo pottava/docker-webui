@@ -1,6 +1,6 @@
 
-var table, query = app.func.query('q'),
-    filters = {status: app.storage.get('filters-status', 3), text: ''};
+var table, query = app.func.query('q'), clients = {}, candidates = [],
+    filters = {client: app.func.query('c', -1), status: app.storage.get('filters-status', 3), text: ''};
 if (query != '') {
   filters.text = query.replace(/\s/g,' ').replace(/　/g,' ');
   filters.text = filters.text.replace(/^\s+|\s+$/gm,'').toUpperCase();
@@ -14,28 +14,31 @@ $(document).ready(function () {
   if (query != '') search.val(query);
 
   setStatusFilter(filters.status);
-  $('#conditions .dropdown-menu a').click(function() {
+  $('#status-filter .dropdown-menu a').click(function(e) {
     setStatusFilter(parseInt($(this).attr('href').substring(1), 10));
-    table.setProps();
-    return false;
+    table.setProps({reload: true});
+    app.func.stop(e);
   });
   $('.detail-refresh a').click(function (e) {
     _detail();
-    return false;
+    app.func.stop(e);
   });
-  $('#container-name').on('shown.bs.modal', function (e) {
+  $('#container-name').on('shown.bs.modal', function () {
     $('#container-name input').focus();
   });
   $('#container-name .act-rename').click(function (e) {
     var popup = $('#container-name'),
         name = popup.find('.title').text(),
-        newname = app.func.trim(popup.find('input').val());
+        client = popup.find('.client-id').val(),
+        newname = app.func.trim(popup.find('input.new-name').val());
     if (newname.length == 0) {
-      popup.find('input').focus();
+      popup.find('input.new-name').focus();
+      app.func.stop(e);
       return;
     }
     popup.modal('hide');
-    _rename(name, newname);
+    _rename(client, name, newname);
+    app.func.stop(e);
   });
   $('#container-commit').on('shown.bs.modal', function (e) {
     $('#container-commit .tag').focus();
@@ -43,6 +46,7 @@ $(document).ready(function () {
   $('#container-commit .act-commit').click(function (e) {
     var popup = $('#container-commit'),
         name = popup.find('.title').text(),
+        client = popup.find('.client-id').val(),
         repository = popup.find('.repository').val(),
         tag = popup.find('.tag').val(),
         message = popup.find('.message').val(),
@@ -52,16 +56,46 @@ $(document).ready(function () {
       return;
     }
     popup.modal('hide');
-    _commit(name, repository, tag, message, author);
+    _commit(client, name, repository, tag, message, author);
   });
 });
 
 $(window).keyup(function (e) {
   var search = $('#search-text');
-  if (search.is(':focus') && (e.which == 13)) {
+  if (search.is(':focus')) {
     _search();
   }
 });
+
+function _setClientOption() {
+  var options = $('.client-filters').hide(),
+      caption = false,
+      count = 0;
+  options.find('ul.dropdown-menu').html('');
+  $.map(clients, function (value, key) {
+    if ((! caption) && (filters.client == key)) caption = value;
+    count++;
+  });
+  caption && options.find('.caption').text(caption);
+  if (count <= 1) {
+    return;
+  }
+  var html = '<li><a href="#-1">All</a></li>';
+  $.map(clients, function (value, key) {
+    html += '<li><a href="#'+key+'">'+value+'</a></li>';
+  });
+  options.find('ul.dropdown-menu').html(html);
+  options.fadeIn();
+
+  $('#client-filter .dropdown-menu a').click(function(e) {
+    var a = $(this),
+        group = a.closest('.btn-group').removeClass('open');
+    group.find('.caption').text(a.text()).blur();
+    filters.client = a.attr('href').substring(1);
+    table.setProps({reload: false});
+    app.func.stop(e);
+  });
+}
 
 function setStatusFilter(value) {
   var a = $('#conditions a[href="#'+value+'"]'),
@@ -76,7 +110,7 @@ function _search() {
   candidate = candidate.replace(/^\s+|\s+$/gm,'').toUpperCase();
   if (filters.text == candidate) return;
   filters.text = candidate;
-  table.setProps();
+  table.setProps({reload: false});
 }
 
 var last = {};
@@ -98,90 +132,98 @@ function _detail(arg) {
   }});
 }
 
-function _rename(id, newname) {
+function _rename(client, id, newname) {
   var data = {name: newname};
+  if (client) data.client = client;
+
   app.func.ajax({type: 'POST', url: '/api/container/rename/'+id, data: data, success: function (data) {
     if (data.indexOf('successfully') == -1) {
       alert(data);
       return;
     }
-    table.setProps();
+    table.setProps({reload: true});
   }});
 }
 
-function _commit(id, repository, tag, message, author) {
+function _commit(client, id, repository, tag, message, author) {
   var data = {repo: repository, tag: tag, msg: message, author: author};
+  if (client) data.client = client;
+
   app.func.ajax({type: 'POST', url: '/api/container/commit/'+id, data: data, success: function (data) {
     var message = data.error ? data.error : 'committed successfully.';
     alert(message);
   }});
 }
 
+function _client(multiple, single) {
+  var count = 0;
+  $.map(clients, function () {count++;});
+  return (count > 1) ? multiple : single;
+}
+
 var TableRow = React.createClass({
   inspect: function() {
     var tr = $(this.getDOMNode()),
         id = tr.attr('data-container-id'),
-        nm = '['+id.substring(0, 4)+'] '+tr.find('.dropdown a.dropdown-toggle').attr('data-container-name');
-    _detail({title: nm, url: '/api/container/inspect/'+id});
-    return false;
+        nm = '['+id.substring(0, 4)+'] '+tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
+        client = _client('?client='+tr.attr('data-client-id'), '');
+    _detail({title: nm, url: '/api/container/inspect/'+id+client});
   },
   processes: function() {
-    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').attr('data-container-name');
-    location.href = '/container/top/'+name;
-    return false;
+    var tr = $(this.getDOMNode()),
+        name = tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
+        client = _client('?client='+tr.attr('data-client-id'), '');
+    location.href = '/container/top/'+name+client;
   },
   statlog: function() {
-    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').attr('data-container-name');
-    location.href = '/container/statlog/'+name;
-    return false;
+    var tr = $(this.getDOMNode()),
+        name = tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
+        client = _client('?client='+tr.attr('data-client-id'), '');
+    location.href = '/container/statlog/'+name+client;
   },
   changes: function() {
-    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').attr('data-container-name');
-    location.href = '/container/changes/'+name;
-    return false;
+    var tr = $(this.getDOMNode()),
+        name = tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
+        client = _client('?client='+tr.attr('data-client-id'), '');
+    location.href = '/container/changes/'+name+client;
   },
   _action: function (sender, arg) {
-    var name = $(sender.getDOMNode()).find('.dropdown a.dropdown-toggle').attr('data-container-name');
+    var tr = $(this.getDOMNode()),
+        name = tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
+        client = _client({client: tr.attr('data-client-id')}, '');
     var success = arg.success ? arg.success : function (data) {
       var message = data.error ? data.error : (arg.msg ? arg.msg : arg.action + 'ed') + ' successfully.';
-      table.setProps();
+      table.setProps({reload: true});
       alert(message);
     };
     if (arg.confirm && !window.confirm(arg.confirm + name)) {
       return;
     }
-    app.func.ajax({type: 'POST', url: '/api/container/'+arg.action+'/'+name, success: success});
+    app.func.ajax({type: 'POST', url: '/api/container/'+arg.action+'/'+name, data: client, success: success});
   },
   restart: function() {
     this._action(this, {action: 'restart'});
-    return false;
   },
   start: function() {
     this._action(this, {action: 'start'});
-    return false;
   },
   stop: function() {
     this._action(this, {action: 'stop', msg: 'stopped'});
-    return false;
   },
   kill: function() {
     this._action(this, {action: 'kill'});
-    return false;
   },
   rm: function() {
     this._action(this, {action: 'rm', msg: 'removed', confirm: 'Are you sure to remove the container?\nID: '});
-    return false;
-  },
-  exec: function() {
-    return false;
   },
   rename: function() {
-    var name = $(this.getDOMNode()).find('.dropdown a.dropdown-toggle').attr('data-container-name');
-    var popup = $('#container-name');
+    var tr = $(this.getDOMNode()),
+        name = tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
+        popup = $('#container-name');
     popup.find('.title').text(name);
     popup.find('input').val(name);
+    popup.find('.client-id').val(tr.attr('data-client-id'));
     popup.modal('show');
-    return false;
   },
   commit: function() {
     var tr = $(this.getDOMNode()),
@@ -191,16 +233,19 @@ var TableRow = React.createClass({
     popup.find('.title').text(name);
     popup.find('.repository').val(repo.substring(0, repo.indexOf(':')));
     popup.find('.tag').val(repo.substring(repo.indexOf(':') + 1));
+    popup.find('.client-id').val(tr.attr('data-client-id'));
     popup.modal('show');
-    return false;
   },
   image: function() {
-    var name = $(this.getDOMNode()).find('.image').text();
-    location.href = '/images?q='+name;
-    return false;
+    var tr = $(this.getDOMNode()),
+        image = tr.find('.image').text(),
+        client = _client('&c='+tr.attr('data-client-id'), '');
+    location.href = '/images?q='+image+client;
   },
   render: function() {
-    var container = this.props.content,
+    var props = this.props.content,
+        container = props.container,
+        key = container.id.substring(0, 20),
         names = '', name = '', ports = '',
         command = container.command,
         status = container.status;
@@ -220,12 +265,12 @@ var TableRow = React.createClass({
     }
     status = status ? status.replace(/seconds*/, 'sec').replace(/minutes*/, 'min').replace(/About /, '') : '';
     return (
-        <tr key={this.props.index} data-container-id={container.id.substring(0, 20)}>
+        <tr key={key + props.endpoint} data-client-id={props.client.id} data-container-id={key}>
           <td className="data-index">{container.id.substring(0, 4)}</td>
           <td className="data-name"><ul className="nav">
             <li className="dropdown">
               <a className="dropdown-toggle" data-toggle="dropdown" href="#" aria-expanded="true" data-container-name={name}>
-                <span>{names.substring(0, names.length-2)}</span>
+                <span>{names.substring(0, names.length-2) + props.endpoint}</span>
               </a>
               <ul className="dropdown-menu">
                 <li><a onClick={this.inspect}>inspect</a></li>
@@ -259,26 +304,84 @@ var Table = React.createClass({
     return {data: []};
   },
   load: function(sender) {
-    var conditions = {
-      status: filters.status,
-      q: filters.text
-    };
-    app.func.ajax({type: 'GET', url: '/api/containers', data: conditions, success: function (data) {
+    clients = {};
+    app.func.ajax({type: 'GET', url: '/api/containers', data: {status: filters.status}, success: function (data) {
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+      candidates = data;
+      $.map(candidates, function (candidate) {
+        clients[''+candidate.client.id] = candidate.client.endpoint.replace(/^.*:\/\//, '').replace(/:.*$/, '');
+      });
+      _setClientOption();
+      sender.setState({data: sender.filter()});
       $('#count').text(data.length + ' container' + ((data.length > 1) ? 's' : ''));
-      sender.setState({data: data});
     }});
+  },
+  filter: function() {
+    var data = [];
+    $.map(candidates, function (candidate) {
+      if ((filters.client == -1) || (candidate.client.id == filters.client)) {
+        data.push({
+          client: candidate.client,
+          containers: candidate.containers
+        });
+      }
+    });
+    return data;
   },
   componentDidMount: function() {
     this.load(this);
   },
-  componentWillReceiveProps: function() {
-    this.load(this);
+  componentWillReceiveProps: function(arg) {
+    if (arg.reload) {
+      this.load(this);
+      return;
+    }
+    this.setState({data: this.filter()});
   },
   render: function() {
-    var rows = this.state.data.map(function(record, index) {
-      return (
-          <TableRow key={record.id.substring(0, 10)} index={index} content={record} />
-      );
+    var multiple = (this.state.data.length > 1);
+    var rows = this.state.data.map(function(host, index) {
+      var client = host.client;
+      host.containers.sort(function (a, b) {
+        if (a.names.join(',') < b.names.join(','))
+          return -1;
+        if (a.names.join(',') > b.names.join(','))
+          return 1;
+        return 0;
+      });
+
+      return host.containers.map(function(container, conIndex) {
+        var key = container.id.substring(0, 10);
+        if (filters.text != '') {
+          var match = true;
+          $.map(filters.text.split(' '), function (word) {
+            var innerMath = (container.id.substring(0, 10).toUpperCase().indexOf(word) > -1);
+            $.map(container.names, function (name) {
+              innerMath |= (name.toUpperCase().indexOf(word) > -1);
+            });
+            innerMath |= (container.image.toUpperCase().indexOf(word) > -1);
+            innerMath |= (container.command && (container.command.toUpperCase().indexOf(word) > -1));
+            innerMath |= (container.status && (container.status.toUpperCase().indexOf(word) > -1));
+            if (container.ports) {
+              $.map(container.ports, function (port) {
+                innerMath |= (port.Type.toUpperCase().indexOf(word) > -1);
+                innerMath |= (port.IP.indexOf(word) > -1);
+                innerMath |= ((''+port.PrivatePort).indexOf(word) > -1);
+                innerMath |= ((''+port.PublicPort).indexOf(word) > -1);
+              });
+            }
+            match &= innerMath;
+          });
+          if (! match) return;
+        }
+        return <TableRow key={key+'@'+client.id} index={key+'@'+index} content={{
+            endpoint: _endpoint(multiple, client.endpoint),
+            client: client, container: container
+        }} />
+      });
     });
     return (
         <table className="table table-striped table-hover">
@@ -297,5 +400,9 @@ var Table = React.createClass({
     );
   }
 });
+
+function _endpoint(multiple, endpoint) {
+  return (multiple ? ' @'+endpoint.replace(/^.*:\/\//, '').replace(/:.*$/, '') : '');
+}
 
 table = React.render(<Table />, document.getElementById('data'));

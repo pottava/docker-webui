@@ -3,6 +3,7 @@ var app = {};
 (function($) {
 	app.func = {
 		ajax : _ajax,
+		stop : _stop,
 		trim : _trim,
 		query : _query,
 		byteFormat: _byteFormat,
@@ -26,9 +27,21 @@ var app = {};
 					arg.error(xhr, status, err);
 					return;
 				}
-				console.error(arg.url, status, err.toString());
+				console.log(arg.url, status, err.toString());
 			}
 		});
+	}
+	function _stop(e) {
+		e = e || window.event;
+		if (!e)
+			return false;
+		e.cancelBubble = true;
+		if (e.stopPropagation)
+			e.stopPropagation();
+		e.returnValue = false;
+		if (e.preventDefault)
+			e.preventDefault();
+		return e;
 	}
 	function _trim(value) {
 		return value.replace(/\s/g,'').replace(/　/g,'')

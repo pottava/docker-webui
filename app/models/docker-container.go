@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	docker "github.com/fsouza/go-dockerclient"
@@ -19,6 +20,9 @@ type DockerContainer struct {
 	SizeRootFs int64            `json:"sizeRootFs,omitempty"`
 	Names      []string         `json:"names,omitempty"`
 }
+
+// DockerContainers represents list of DockerContainer
+type DockerContainers []DockerContainer
 
 // DockerStats represents a container's stats
 type DockerStats struct {
@@ -63,14 +67,15 @@ func ListContainerOption(flag int) docker.ListContainersOptions {
 }
 
 // SearchContainers checks whether it contains key word or not
-func SearchContainers(containers []docker.APIContainers, words []string) []DockerContainer {
-	results := []DockerContainer{}
+func SearchContainers(containers []docker.APIContainers, words []string) DockerContainers {
+	results := DockerContainers{}
 	for _, c := range containers {
 		container := convertContainer(c)
 		if container.contains(words) {
 			results = append(results, container)
 		}
 	}
+	sort.Sort(results)
 	return results
 }
 
@@ -148,4 +153,20 @@ func (c DockerContainer) toUpperFields() DockerContainer {
 		container.Names[idx] = strings.ToUpper(name)
 	}
 	return container
+}
+
+func (cons DockerContainers) Len() int {
+	return len(cons)
+}
+
+func (cons DockerContainers) Swap(i, j int) {
+	cons[i], cons[j] = cons[j], cons[i]
+}
+
+func (cons DockerContainers) Less(i, j int) bool {
+	a, b := cons[i], cons[j]
+	if len(a.Names) > 0 && len(b.Names) > 0 {
+		return a.Names[0] < b.Names[0]
+	}
+	return a.Created < b.Created
 }

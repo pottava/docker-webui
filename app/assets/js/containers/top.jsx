@@ -28,8 +28,11 @@ var Table = React.createClass({
     return {data: {}};
   },
   componentDidMount: function() {
-    var self = this, id = $('#container-id').val();
-    app.func.ajax({type: 'GET', url: '/api/container/top/'+id, success: function (data) {
+    var self = this,
+        id = $('#container-id').val(),
+        client = $('#client-id').val();
+    client = client ? '?client='+client : '';
+    app.func.ajax({type: 'GET', url: '/api/container/top/'+id+client, success: function (data) {
       self.setState({data: data});
     }});
   },

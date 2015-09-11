@@ -3,9 +3,16 @@
 {{ define "js" }}<script type="text/jsx" src="{{ .StaticFileHost }}/assets/js/containers/index.jsx"></script>{{ end }}
 {{ define "content" }}
 
-  <div id="conditions" class="navbar-collapse" id="bs-example-navbar-collapse-1">
+  <div id="conditions" class="navbar-collapse">
     <div class="navbar-form navbar-left" role="search">
-      <div class="btn-group" data-filter-key="status">
+      <div id="client-filter" class="client-filters btn-group" data-filter-key="client" style="display: none;">
+        <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+          <span class="caption">All</span>&nbsp;
+          <span class="caret"></span>
+        </a>
+        <ul class="dropdown-menu"></ul>
+      </div>
+      <div id="status-filter" class="btn-group" data-filter-key="status">
         <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
           <span class="caption">All</span>&nbsp;
           <span class="caret"></span>
@@ -56,7 +63,8 @@
           <hr>
         </div>
         <div class="modal-body" style="padding: 17px 15px 10px 15px;">
-          <input type="text" class="form-control" placeholder="" autocomplete="off" style="width: 100%;">
+          <input class="client-id" type="hidden">
+          <input type="text" class="new-name form-control" placeholder="" autocomplete="off" style="width: 100%;">
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
@@ -76,6 +84,7 @@
           <hr>
         </div>
         <div class="modal-body" style="padding: 17px 15px 10px 15px;">
+          <input class="client-id" type="hidden">
           <div class="item-caption" style="margin-top: 0;">Repository<span style="color: red;">*</span>:</div>
           <input type="text" class="form-control repository" placeholder="owner/image" autocomplete="off" style="width: 100%;">
           <div class="item-caption">Tag:</div>
