@@ -1,0 +1,54 @@
+{{ define "title" }}clients | {{ .AppName }}{{ end }}
+{{ define "css" }}<link rel="stylesheet" href="{{ .StaticFileHost }}/assets/css/app/index.css">{{ end }}
+{{ define "js" }}<script type="text/jsx" src="{{ .StaticFileHost }}/assets/js/clients/index.jsx"></script>{{ end }}
+{{ define "content" }}
+
+  <div class="navbar-collapse">
+    <div class="navbar-form navbar-left">
+      <div class="form-group">
+        <a class="btn btn-default" data-toggle="modal" data-target="#add-client">+</a>
+      </div>
+    </div>
+    <h4 id="count">0 client</h4>
+  </div>
+
+  <div id="data"></div>
+
+  <div id="client-detail" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="detail-title">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span></button>
+          <h3 class="modal-title detail-title"></h3>
+          <hr>
+        </div>
+        <div class="modal-body">
+          <pre class="well-sm"><span class="details"></span></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="add-client" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span></button>
+          <h3 class="modal-title detail-title">Add a new client</h3>
+          <hr>
+        </div>
+        <div class="modal-body" style="padding: 17px 15px 10px 15px;">
+          <input id="endpoint" type="text" class="form-control"
+            placeholder="tcp://127.0.0.1:2375" autocomplete="off" style="width: 100%;">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary act-add">Add</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+{{ end }}

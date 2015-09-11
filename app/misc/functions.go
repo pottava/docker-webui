@@ -2,7 +2,10 @@
 package misc
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"os/exec"
 	"reflect"
 	"strconv"
@@ -121,4 +124,19 @@ func StringToTime(t string) time.Time {
 	timeformat := "2006-01-02T15:04:05Z0700"
 	candidate, _ := time.Parse(timeformat, t)
 	return candidate
+}
+
+// SaveAsFile saves data as a file
+func SaveAsFile(path string, data interface{}) error {
+	bytes, _ := json.Marshal(data)
+	return ioutil.WriteFile(path, bytes, os.FileMode(0600))
+}
+
+// ReadFromFile reads data from a file
+func ReadFromFile(path string, data interface{}) error {
+	file, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(file, data)
 }

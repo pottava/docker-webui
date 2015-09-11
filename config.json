@@ -1,5 +1,6 @@
 {
-  "LogLevel": 99,
-  "DockerEndpoint": "unix:///var/run/docker.sock",
-  "DockerAPIVersion": "1.18"
+  "DockerEndpoints": [
+    "unix:///var/run/docker.sock"
+  ],
+  "LogLevel": 99
 }

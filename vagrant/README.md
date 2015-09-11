@@ -26,7 +26,7 @@ $ vagrant up
 
 ### 5. Confirm whether a service is running
 
-[hhttp://docker-webui.local/](http://docker-webui.local/)
+[hhttp://docker-webui.localhost.com/](http://docker-webui.localhost.com/)
 
 ### 6. Test the application
 

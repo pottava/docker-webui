@@ -1,6 +1,7 @@
 package models
 
 import (
+	"sort"
 	"strings"
 
 	docker "github.com/fsouza/go-dockerclient"
@@ -18,15 +19,19 @@ type DockerImage struct {
 	Labels      map[string]string `json:"labels,omitempty"`
 }
 
+// DockerImages represents list of DockerImage
+type DockerImages []DockerImage
+
 // SearchImages checks whether it contains key word or not
-func SearchImages(images []docker.APIImages, words []string) []DockerImage {
-	results := []DockerImage{}
+func SearchImages(images []docker.APIImages, words []string) DockerImages {
+	results := DockerImages{}
 	for _, i := range images {
 		image := convertImage(i)
 		if image.contains(words) {
 			results = append(results, image)
 		}
 	}
+	sort.Sort(results)
 	return results
 }
 
@@ -72,9 +77,6 @@ func (i DockerImage) toUpperFields() DockerImage {
 	for idx, repo := range i.RepoTags {
 		image.RepoTags[idx] = strings.ToUpper(repo)
 	}
-	image.Created = i.Created
-	image.Size = i.Size
-	image.VirtualSize = i.VirtualSize
 	image.ParentID = strings.ToUpper(i.ParentID)
 	image.RepoDigests = make([]string, len(i.RepoDigests))
 	for idx, repo := range i.RepoDigests {
@@ -85,4 +87,20 @@ func (i DockerImage) toUpperFields() DockerImage {
 		image.Labels[key] = strings.ToUpper(value)
 	}
 	return image
+}
+
+func (imgs DockerImages) Len() int {
+	return len(imgs)
+}
+
+func (imgs DockerImages) Swap(i, j int) {
+	imgs[i], imgs[j] = imgs[j], imgs[i]
+}
+
+func (imgs DockerImages) Less(i, j int) bool {
+	a, b := imgs[i], imgs[j]
+	if len(a.RepoTags) > 0 && len(b.RepoTags) > 0 {
+		return a.RepoTags[0] < b.RepoTags[0]
+	}
+	return a.Created < b.Created
 }

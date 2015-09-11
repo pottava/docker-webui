@@ -10,33 +10,33 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/docker/docker/pkg/parsers"
 	"github.com/pottava/docker-webui/app/config"
 	"github.com/pottava/docker-webui/app/logs"
 	"github.com/pottava/docker-webui/app/misc"
+	"github.com/pottava/docker-webui/app/models"
 
-	docker "github.com/fsouza/go-dockerclient"
+	api "github.com/fsouza/go-dockerclient"
 )
 
-// DockerClient represents wrapped docker.Client
-type DockerClient struct {
-	*docker.Client
+// Client represents wrapped api.Client
+type Client struct {
+	*api.Client
+	Conf *models.DockerClient
 }
 
-// DockerContainerMetadata represents docker response
-type DockerContainerMetadata struct {
-	Container *docker.Container
+// ContainerMetadata represents docker response
+type ContainerMetadata struct {
+	Container *api.Container
 	Error     error
 }
 
-// DockerImageMetadata represents docker response
-type DockerImageMetadata struct {
-	Image *docker.Image
+// ImageMetadata represents docker response
+type ImageMetadata struct {
+	Image *api.Image
 	Error error
 }
 
-// Docker is a client for docker
-var Docker *DockerClient
+var current *models.DockerClient
 
 var cfg *config.Config
 var containerID string
@@ -54,82 +54,96 @@ func init() {
 			logs.Debug.Printf("Docker container ID: %s", containerID)
 		}
 	}
-	err := SetDockerClient(cfg.DockerEndpoint, cfg.DockerCertPath)
-	if err != nil {
-		logs.Fatal.Printf("@docker.NewVersionedClient %v", err)
+	for index, endpoint := range cfg.DockerEndpoints {
+		if len(cfg.DockerCertPath) > index {
+			Configure(endpoint, cfg.DockerCertPath[index], true)
+		} else {
+			Configure(endpoint, "", true)
+		}
 	}
 }
 
-// SetDockerClient sets DockerClient if it was generated successfully
-func SetDockerClient(endpoint, certPath string) (err error) {
-	var client *docker.Client
-	if misc.ZeroOrNil(certPath) {
-		client, err = docker.NewVersionedClient(endpoint, cfg.DockerAPIVersion)
-	} else {
-		cert := fmt.Sprintf("%s/cert.pem", certPath) // X.509 Certificate
-		key := fmt.Sprintf("%s/key.pem", certPath)   // Private Key
-		ca := fmt.Sprintf("%s/ca.pem", certPath)     // Certificate authority
-		client, err = docker.NewVersionedTLSClient(endpoint, cfg.DockerAPIVersion, cert, key, ca)
+// Configure set client's configuration to current
+func Configure(endpoint, certPath string, def bool) {
+	current = &models.DockerClient{
+		Endpoint:  endpoint,
+		CertPath:  certPath,
+		IsActive:  true,
+		IsDefault: def,
 	}
-	if !misc.ZeroOrNil(client) {
-		err = client.Ping()
+	current.Save()
+}
+
+// Docker generates a docker client
+func Docker() (client *Client, err error) {
+	var c *api.Client
+	if misc.ZeroOrNil(current.CertPath) {
+		c, err = api.NewClient(current.Endpoint)
+	} else {
+		cert := fmt.Sprintf("%s/cert.pem", current.CertPath) // X.509 Certificate
+		key := fmt.Sprintf("%s/key.pem", current.CertPath)   // Private Key
+		ca := fmt.Sprintf("%s/ca.pem", current.CertPath)     // Certificate authority
+		c, err = api.NewTLSClient(current.Endpoint, cert, key, ca)
+	}
+	if !misc.ZeroOrNil(c) {
+		err = c.Ping()
 	}
 	if misc.ZeroOrNil(err) {
-		client.SkipServerVersionCheck = true
-		Docker = &DockerClient{client}
+		c.SkipServerVersionCheck = true
+		return &Client{c, current}, nil
 	}
-	return err
+	return nil, err
 }
 
 // InspectContainer inspects the docker container
-func (c *DockerClient) InspectContainer(id string) DockerContainerMetadata {
+func (c *Client) InspectContainer(id string) ContainerMetadata {
 	container, err := c.Client.InspectContainer(id)
 	if err != nil {
-		return DockerContainerMetadata{
-			Container: &docker.Container{ID: ""},
+		return ContainerMetadata{
+			Container: &api.Container{ID: ""},
 			Error:     CannotXContainerError{"Inspect", err.Error()},
 		}
 	}
-	return DockerContainerMetadata{Container: container}
+	return ContainerMetadata{Container: container}
 }
 
 // ListImages list docker images
-func (c *DockerClient) ListImages() []docker.APIImages {
-	images, err := c.Client.ListImages(docker.ListImagesOptions{All: false})
+func (c *Client) ListImages() []api.APIImages {
+	images, err := c.Client.ListImages(api.ListImagesOptions{All: false})
 	if err != nil {
-		images = []docker.APIImages{}
+		images = []api.APIImages{}
 	}
 	return images
 }
 
 // InspectImage inspects the docker image
-func (c *DockerClient) InspectImage(id string) DockerImageMetadata {
+func (c *Client) InspectImage(id string) ImageMetadata {
 	image, err := c.Client.InspectImage(id)
 	if err != nil {
-		return DockerImageMetadata{
-			Image: &docker.Image{ID: ""},
+		return ImageMetadata{
+			Image: &api.Image{ID: ""},
 			Error: CannotXContainerError{"Inspect", err.Error()},
 		}
 	}
-	return DockerImageMetadata{Image: image}
+	return ImageMetadata{Image: image}
 }
 
 // Top returns processes
-func (c *DockerClient) Top(id, args string) docker.TopResult {
+func (c *Client) Top(id, args string) api.TopResult {
 	processes, err := c.TopContainer(id, args)
 	if err != nil {
-		processes = docker.TopResult{}
+		processes = api.TopResult{}
 	}
 	return processes
 }
 
 // Stats returns container statistics
-func (c *DockerClient) Stats(id string, count int) (result []*docker.Stats, err error) {
+func (c *Client) Stats(id string, count int) (result []*api.Stats, err error) {
 	e := make(chan error, 1)
-	s := make(chan *docker.Stats)
+	s := make(chan *api.Stats)
 	done := make(chan bool)
 	go func() {
-		e <- c.Client.Stats(docker.StatsOptions{
+		e <- c.Client.Stats(api.StatsOptions{
 			ID:      id,
 			Stats:   s,
 			Stream:  true,
@@ -156,7 +170,7 @@ func (c *DockerClient) Stats(id string, count int) (result []*docker.Stats, err 
 }
 
 // Logs returns containers logs
-func (c *DockerClient) Logs(id string, since int64, line int, timeout time.Duration) (stdout []string, stderr []string, err error) {
+func (c *Client) Logs(id string, line int, timeout time.Duration) (stdout []string, stderr []string, err error) {
 	stdout = []string{}
 	stderr = []string{}
 
@@ -168,7 +182,6 @@ func (c *DockerClient) Logs(id string, since int64, line int, timeout time.Durat
 	go func() {
 		e <- c.LogStream(LogsOptions{
 			ID:      id,
-			Since:   since,
 			Tail:    int64(line),
 			Stdout:  cStdOut,
 			Stderr:  cStdErr,
@@ -211,7 +224,6 @@ func (c *DockerClient) Logs(id string, since int64, line int, timeout time.Durat
 // LogsOptions can be
 type LogsOptions struct {
 	ID      string
-	Since   int64
 	Tail    int64
 	Stdout  chan<- string
 	Stderr  chan<- string
@@ -220,7 +232,7 @@ type LogsOptions struct {
 }
 
 // LogStream returns containers logs as streams
-func (c *DockerClient) LogStream(opts LogsOptions) (err error) {
+func (c *Client) LogStream(opts LogsOptions) (err error) {
 	timeout := time.After(opts.Timeout)
 	outReader, outWriter := io.Pipe()
 	errReader, errWriter := io.Pipe()
@@ -236,17 +248,16 @@ func (c *DockerClient) LogStream(opts LogsOptions) (err error) {
 		if opts.Tail > 0 {
 			tail = fmt.Sprint(opts.Tail)
 		}
-		err = c.Client.Logs(docker.LogsOptions{
+		err = c.Client.Logs(api.LogsOptions{
 			Container:    opts.ID,
 			OutputStream: outWriter,
 			ErrorStream:  errWriter,
 			// TODO
 			// There's no way to stop this goroutine if this flag is true for now.
-			// Have to turn to true if the issue (https://github.com/fsouza/go-dockerclient/issues/298) is closed.
+			// Have to turn to true if the issue (https://github.com/fsouza/go-Client/issues/298) is closed.
 			Follow:     false,
 			Stdout:     true,
 			Stderr:     true,
-			Since:      opts.Since,
 			Timestamps: true,
 			Tail:       tail,
 		})
@@ -297,59 +308,59 @@ func (c *DockerClient) LogStream(opts LogsOptions) (err error) {
 }
 
 // Changes returns containers changed files
-func (c *DockerClient) Changes(id string) []docker.Change {
+func (c *Client) Changes(id string) []api.Change {
 	changes, err := c.ContainerChanges(id)
 	if err != nil {
-		changes = []docker.Change{}
+		changes = []api.Change{}
 	}
 	return changes
 }
 
 // History returns its history
-func (c *DockerClient) History(id string) []docker.ImageHistory {
+func (c *Client) History(id string) []api.ImageHistory {
 	history, err := c.ImageHistory(id)
 	if err != nil {
-		history = []docker.ImageHistory{}
+		history = []api.ImageHistory{}
 	}
 	return history
 }
 
 // Rename renames the container
-func (c *DockerClient) Rename(id, name string) error {
-	return c.RenameContainer(docker.RenameContainerOptions{
+func (c *Client) Rename(id, name string) error {
+	return c.RenameContainer(api.RenameContainerOptions{
 		ID:   id,
 		Name: name,
 	})
 }
 
 // Pull pulls docker images more safely
-func (c *DockerClient) Pull(image string) DockerImageMetadata {
+func (c *Client) Pull(image string) ImageMetadata {
 	timeout := time.After(cfg.DockerPullTimeout)
 
 	pullLock.Lock()
 	defer pullLock.Unlock()
 
-	response := make(chan DockerImageMetadata, 1)
+	response := make(chan ImageMetadata, 1)
 	go func() { response <- c.pull(image) }()
 
 	select {
 	case resp := <-response:
 		return resp
 	case <-timeout:
-		return DockerImageMetadata{
-			Image: &docker.Image{ID: ""},
+		return ImageMetadata{
+			Image: &api.Image{ID: ""},
 			Error: &DockerTimeoutError{cfg.DockerPullTimeout, "pulled"},
 		}
 	}
 }
 
-func (c *DockerClient) pull(image string) DockerImageMetadata {
+func (c *Client) pull(image string) ImageMetadata {
 	reader, writer := io.Pipe()
 	defer writer.Close()
 
-	repository, tag := parsers.ParseRepositoryTag(image)
+	repository, tag := api.ParseRepositoryTag(image)
 	tag = misc.NVL(tag, "latest")
-	opts := docker.PullImageOptions{
+	opts := api.PullImageOptions{
 		Repository:   repository + ":" + tag,
 		OutputStream: writer,
 	}
@@ -383,7 +394,7 @@ func (c *DockerClient) pull(image string) DockerImageMetadata {
 	timeout := time.After(cfg.DockerPullBeginTimeout)
 	finished := make(chan error, 1)
 	go func() {
-		finished <- c.PullImage(opts, docker.AuthConfiguration{})
+		finished <- c.PullImage(opts, api.AuthConfiguration{})
 		logs.Debug.Printf("Pull completed for image: %v", opts.Repository)
 	}()
 
@@ -393,15 +404,15 @@ func (c *DockerClient) pull(image string) DockerImageMetadata {
 		break
 	case err := <-finished:
 		if err != nil {
-			return DockerImageMetadata{
-				Image: &docker.Image{ID: ""},
+			return ImageMetadata{
+				Image: &api.Image{ID: ""},
 				Error: CannotXContainerError{"Pull", err.Error()},
 			}
 		}
 		return c.InspectImage(opts.Repository)
 	case <-timeout:
-		return DockerImageMetadata{
-			Image: &docker.Image{ID: ""},
+		return ImageMetadata{
+			Image: &api.Image{ID: ""},
 			Error: &DockerTimeoutError{cfg.DockerPullBeginTimeout, "pullBegin"},
 		}
 	}
@@ -409,8 +420,8 @@ func (c *DockerClient) pull(image string) DockerImageMetadata {
 	// wait for the completion
 	err := <-finished
 	if err != nil {
-		return DockerImageMetadata{
-			Image: &docker.Image{ID: ""},
+		return ImageMetadata{
+			Image: &api.Image{ID: ""},
 			Error: CannotXContainerError{"Pull", err.Error()},
 		}
 	}
@@ -418,13 +429,13 @@ func (c *DockerClient) pull(image string) DockerImageMetadata {
 }
 
 // Create creates docker containers more safely
-func (c *DockerClient) Create(name string, config *docker.Config, host *docker.HostConfig) DockerContainerMetadata {
+func (c *Client) Create(name string, config *api.Config, host *api.HostConfig) ContainerMetadata {
 	timeout := time.After(cfg.DockerStartTimeout)
 
 	ctx, cancel := context.WithCancel(context.TODO())
-	response := make(chan DockerContainerMetadata, 1)
+	response := make(chan ContainerMetadata, 1)
 	go func() {
-		response <- c.create(ctx, docker.CreateContainerOptions{
+		response <- c.create(ctx, api.CreateContainerOptions{
 			Name:       name,
 			Config:     config,
 			HostConfig: host,
@@ -436,35 +447,35 @@ func (c *DockerClient) Create(name string, config *docker.Config, host *docker.H
 		return resp
 	case <-timeout:
 		cancel()
-		return DockerContainerMetadata{
-			Container: &docker.Container{ID: ""},
+		return ContainerMetadata{
+			Container: &api.Container{ID: ""},
 			Error:     &DockerTimeoutError{cfg.DockerStartTimeout, "run"},
 		}
 	}
 }
 
-func (c *DockerClient) create(ctx context.Context, opt docker.CreateContainerOptions) DockerContainerMetadata {
-	ch := make(chan DockerContainerMetadata, 1)
+func (c *Client) create(ctx context.Context, opt api.CreateContainerOptions) ContainerMetadata {
+	ch := make(chan ContainerMetadata, 1)
 	go func() {
 		container, err := c.CreateContainer(opt)
-		ch <- DockerContainerMetadata{container, err}
+		ch <- ContainerMetadata{container, err}
 	}()
 	select {
 	case meta := <-ch:
 		return meta
 	case <-ctx.Done():
-		return DockerContainerMetadata{
-			Container: &docker.Container{ID: ""},
+		return ContainerMetadata{
+			Container: &api.Container{ID: ""},
 		}
 	}
 }
 
 // Restart restarts docker containers more safely
-func (c *DockerClient) Restart(id string, wait uint) DockerContainerMetadata {
+func (c *Client) Restart(id string, wait uint) ContainerMetadata {
 	timeout := time.After(cfg.DockerRestartTimeout)
 
 	ctx, cancel := context.WithCancel(context.TODO())
-	response := make(chan DockerContainerMetadata, 1)
+	response := make(chan ContainerMetadata, 1)
 	go func() { response <- c.restart(ctx, id, wait) }()
 
 	select {
@@ -472,19 +483,19 @@ func (c *DockerClient) Restart(id string, wait uint) DockerContainerMetadata {
 		return resp
 	case <-timeout:
 		cancel()
-		return DockerContainerMetadata{
-			Container: &docker.Container{ID: ""},
+		return ContainerMetadata{
+			Container: &api.Container{ID: ""},
 			Error:     &DockerTimeoutError{cfg.DockerRestartTimeout, "restarting"},
 		}
 	}
 }
 
-func (c *DockerClient) restart(ctx context.Context, id string, wait uint) DockerContainerMetadata {
+func (c *Client) restart(ctx context.Context, id string, wait uint) ContainerMetadata {
 	if cfg.PreventSelfStop {
 		info := c.InspectContainer(id)
 		if containerID == info.Container.ID[:64] {
-			return DockerContainerMetadata{
-				Container: &docker.Container{ID: info.Container.ID},
+			return ContainerMetadata{
+				Container: &api.Container{ID: info.Container.ID},
 				Error:     &CannotXContainerError{" restart ", "Prevented this application itself for restarting"},
 			}
 		}
@@ -500,18 +511,18 @@ func (c *DockerClient) restart(ctx context.Context, id string, wait uint) Docker
 		}
 		return meta
 	case <-ctx.Done():
-		return DockerContainerMetadata{
-			Container: &docker.Container{ID: id},
+		return ContainerMetadata{
+			Container: &api.Container{ID: id},
 		}
 	}
 }
 
 // Start starts docker containers more safely
-func (c *DockerClient) Start(id string) DockerContainerMetadata {
+func (c *Client) Start(id string) ContainerMetadata {
 	timeout := time.After(cfg.DockerStartTimeout)
 
 	ctx, cancel := context.WithCancel(context.TODO())
-	response := make(chan DockerContainerMetadata, 1)
+	response := make(chan ContainerMetadata, 1)
 	go func() { response <- c.start(ctx, id) }()
 
 	select {
@@ -519,14 +530,14 @@ func (c *DockerClient) Start(id string) DockerContainerMetadata {
 		return resp
 	case <-timeout:
 		cancel()
-		return DockerContainerMetadata{
-			Container: &docker.Container{ID: ""},
+		return ContainerMetadata{
+			Container: &api.Container{ID: ""},
 			Error:     &DockerTimeoutError{cfg.DockerStartTimeout, "starting"},
 		}
 	}
 }
 
-func (c *DockerClient) start(ctx context.Context, id string) DockerContainerMetadata {
+func (c *Client) start(ctx context.Context, id string) ContainerMetadata {
 	ch := make(chan error, 1)
 	go func() { ch <- c.StartContainer(id, nil) }()
 
@@ -538,19 +549,19 @@ func (c *DockerClient) start(ctx context.Context, id string) DockerContainerMeta
 		}
 		return meta
 	case <-ctx.Done():
-		return DockerContainerMetadata{
-			Container: &docker.Container{ID: id},
+		return ContainerMetadata{
+			Container: &api.Container{ID: id},
 		}
 	}
 }
 
 // Stop stops docker containers more safely
-func (c *DockerClient) Stop(id string) DockerContainerMetadata {
+func (c *Client) Stop(id string) ContainerMetadata {
 	if cfg.PreventSelfStop {
 		info := c.InspectContainer(id)
 		if containerID == info.Container.ID[:64] {
-			return DockerContainerMetadata{
-				Container: &docker.Container{ID: info.Container.ID},
+			return ContainerMetadata{
+				Container: &api.Container{ID: info.Container.ID},
 				Error:     &CannotXContainerError{" stop ", "Prevented this application itself for stopping"},
 			}
 		}
@@ -558,7 +569,7 @@ func (c *DockerClient) Stop(id string) DockerContainerMetadata {
 	timeout := time.After(cfg.DockerStopTimeout)
 
 	ctx, cancel := context.WithCancel(context.TODO())
-	response := make(chan DockerContainerMetadata, 1)
+	response := make(chan ContainerMetadata, 1)
 	go func() { response <- c.stop(ctx, id) }()
 
 	select {
@@ -566,14 +577,14 @@ func (c *DockerClient) Stop(id string) DockerContainerMetadata {
 		return resp
 	case <-timeout:
 		cancel()
-		return DockerContainerMetadata{
-			Container: &docker.Container{ID: ""},
+		return ContainerMetadata{
+			Container: &api.Container{ID: ""},
 			Error:     &DockerTimeoutError{cfg.DockerStopTimeout, "stopping"},
 		}
 	}
 }
 
-func (c *DockerClient) stop(ctx context.Context, id string) DockerContainerMetadata {
+func (c *Client) stop(ctx context.Context, id string) ContainerMetadata {
 	ch := make(chan error, 1)
 	go func() { ch <- c.StopContainer(id, 30) }()
 
@@ -585,18 +596,18 @@ func (c *DockerClient) stop(ctx context.Context, id string) DockerContainerMetad
 		}
 		return meta
 	case <-ctx.Done():
-		return DockerContainerMetadata{
-			Container: &docker.Container{ID: id},
+		return ContainerMetadata{
+			Container: &api.Container{ID: id},
 		}
 	}
 }
 
 // Kill kills docker containers more safely
-func (c *DockerClient) Kill(id string, wait uint) DockerContainerMetadata {
+func (c *Client) Kill(id string, wait uint) ContainerMetadata {
 	timeout := time.After(cfg.DockerKillTimeout)
 
 	ctx, cancel := context.WithCancel(context.TODO())
-	response := make(chan DockerContainerMetadata, 1)
+	response := make(chan ContainerMetadata, 1)
 	go func() { response <- c.kill(ctx, id, wait) }()
 
 	select {
@@ -604,28 +615,28 @@ func (c *DockerClient) Kill(id string, wait uint) DockerContainerMetadata {
 		return resp
 	case <-timeout:
 		cancel()
-		return DockerContainerMetadata{
-			Container: &docker.Container{ID: ""},
+		return ContainerMetadata{
+			Container: &api.Container{ID: ""},
 			Error:     &DockerTimeoutError{cfg.DockerKillTimeout, "killing"},
 		}
 	}
 }
 
-func (c *DockerClient) kill(ctx context.Context, id string, wait uint) DockerContainerMetadata {
+func (c *Client) kill(ctx context.Context, id string, wait uint) ContainerMetadata {
 	if cfg.PreventSelfStop {
 		info := c.InspectContainer(id)
 		if containerID == info.Container.ID[:64] {
-			return DockerContainerMetadata{
-				Container: &docker.Container{ID: info.Container.ID},
+			return ContainerMetadata{
+				Container: &api.Container{ID: info.Container.ID},
 				Error:     &CannotXContainerError{" kill ", "Prevented this application itself for killing"},
 			}
 		}
 	}
 	ch := make(chan error, 1)
 	go func() {
-		ch <- c.KillContainer(docker.KillContainerOptions{
+		ch <- c.KillContainer(api.KillContainerOptions{
 			ID:     id,
-			Signal: docker.SIGKILL,
+			Signal: api.SIGKILL,
 		})
 	}()
 
@@ -637,50 +648,50 @@ func (c *DockerClient) kill(ctx context.Context, id string, wait uint) DockerCon
 		}
 		return meta
 	case <-ctx.Done():
-		return DockerContainerMetadata{
-			Container: &docker.Container{ID: id},
+		return ContainerMetadata{
+			Container: &api.Container{ID: id},
 		}
 	}
 }
 
 // Commit commit docker containers more safely
-func (c *DockerClient) Commit(id, repository, tag, message, author string) DockerImageMetadata {
+func (c *Client) Commit(id, repository, tag, message, author string) ImageMetadata {
 	timeout := time.After(cfg.DockerCommitTimeout)
-	response := make(chan DockerImageMetadata, 1)
+	response := make(chan ImageMetadata, 1)
 	go func() {
-		image, err := c.CommitContainer(docker.CommitContainerOptions{
+		image, err := c.CommitContainer(api.CommitContainerOptions{
 			Container:  id,
 			Repository: repository,
 			Tag:        tag,
 			Message:    message,
 			Author:     author,
 		})
-		response <- DockerImageMetadata{Image: image, Error: err}
+		response <- ImageMetadata{Image: image, Error: err}
 	}()
 	select {
 	case resp := <-response:
 		return resp
 	case <-timeout:
-		return DockerImageMetadata{
-			Image: &docker.Image{ID: ""},
+		return ImageMetadata{
+			Image: &api.Image{ID: ""},
 			Error: &DockerTimeoutError{cfg.DockerCommitTimeout, "committing"}}
 	}
 }
 
 // Tag tags docker images more safely
-func (c *DockerClient) Tag(id, repository, tag string) error {
-	return c.TagImage(id, docker.TagImageOptions{
+func (c *Client) Tag(id, repository, tag string) error {
+	return c.TagImage(id, api.TagImageOptions{
 		Repo: repository,
 		Tag:  tag,
 	})
 }
 
 // Rm removes docker containers more safely
-func (c *DockerClient) Rm(id string) error {
+func (c *Client) Rm(id string) error {
 	timeout := time.After(cfg.DockerRmTimeout)
 	response := make(chan error, 1)
 	go func() {
-		response <- c.RemoveContainer(docker.RemoveContainerOptions{
+		response <- c.RemoveContainer(api.RemoveContainerOptions{
 			ID:            id,
 			RemoveVolumes: true,
 			Force:         false,
@@ -695,11 +706,11 @@ func (c *DockerClient) Rm(id string) error {
 }
 
 // Rmi removes docker images more safely
-func (c *DockerClient) Rmi(id string) error {
+func (c *Client) Rmi(id string) error {
 	timeout := time.After(cfg.DockerRmTimeout)
 	response := make(chan error, 1)
 	go func() {
-		response <- c.RemoveImageExtended(id, docker.RemoveImageOptions{
+		response <- c.RemoveImageExtended(id, api.RemoveImageOptions{
 			Force:   false,
 			NoPrune: false,
 		})

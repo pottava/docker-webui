@@ -65,10 +65,19 @@ func SplittedUpperStrings(value string) []string {
 	return words
 }
 
-// RequestPostParam retrives a request parameter
+// RequestPostParam retrives a POST request parameter
 func RequestPostParam(r *http.Request, key string) (string, bool) {
 	value := r.PostFormValue(key)
 	return value, (value != "")
+}
+
+// RequestPostParamS retrives a request parameter as string
+func RequestPostParamS(r *http.Request, key, def string) string {
+	value, found := RequestPostParam(r, key)
+	if !found {
+		return def
+	}
+	return value
 }
 
 // Chain enables middleware chaining

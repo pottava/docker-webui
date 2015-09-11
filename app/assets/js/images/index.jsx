@@ -1,6 +1,7 @@
 
-var table, query = app.func.query('q'),
-    filters = {text: ''}, reload = false;
+var table, query = app.func.query('q'), clients = {}, candidates = [],
+    filters = {client: app.func.query('c', false), text: ''},
+    reload = false;
 if (query != '') {
   filters.text = query.replace(/\s/g,' ').replace(/　/g,' ');
   filters.text = filters.text.replace(/^\s+|\s+$/gm,'').toUpperCase();
@@ -15,38 +16,49 @@ $(document).ready(function () {
 
   $('.detail-refresh a').click(function (e) {
     _detail();
-    return false;
+    app.func.stop(e);
   });
-  $('#image-detail').on('hide.bs.modal', function (e) {
-    if (reload) table.setProps();
+
+  $('#image-detail').on('hide.bs.modal', function () {
+    if (reload) table.setProps({reload: true});
   });
-  $('#image-pull').on('shown.bs.modal', function (e) {
-    $('#image-name').val('').focus();
+  $('#image-pull').on('show.bs.modal', function () {
+    $('#image-name').val('');
+  });
+  $('#image-pull').on('shown.bs.modal', function () {
+    $('#image-name').focus();
   });
   $('#image-pull .act-pull').click(function (e) {
     var name = app.func.trim($('#image-name').val());
     if (name.length == 0) {
       $('#image-name').focus();
-      return;
+      app.func.stop(e);
+      return
     }
     $('#image-pull').modal('hide');
-    _pull(name);
+    _pull($('#pull-client-id').val(), name);
+    app.func.stop(e);
   });
-  $('#image-tag').on('shown.bs.modal', function (e) {
+
+  $('#image-tag').on('shown.bs.modal', function () {
     $('#image-tag .repository').focus();
   });
   $('#image-tag .act-tag').click(function (e) {
     var popup = $('#image-tag'),
+        client = popup.find('.client').val();
         id = popup.find('.image-id').val(),
         repository = popup.find('.repository').val(),
         tag = popup.find('.tag').val();
     if (repository.length == 0) {
       popup.find('.repository').focus();
+      app.func.stop(e);
       return;
     }
     popup.modal('hide');
-    _tag(id, repository, tag);
+    _tag(client, id, repository, tag);
+    app.func.stop(e);
   });
+
   $('#image-run .act-run').click(function (e) {
     $('#image-run').modal('hide');
   });
@@ -54,17 +66,56 @@ $(document).ready(function () {
 
 $(window).keyup(function (e) {
   var search = $('#search-text');
-  if (search.is(':focus') && (e.which == 13)) {
+  if (search.is(':focus')) {
     _search();
   }
 });
+
+function _setClientOption() {
+  var options = $('.client-filters').hide(),
+      caption = false,
+      count = 0;
+  options.find('ul.dropdown-menu').html('');
+  $.map(clients, function (value, key) {
+    if (! filters.client) filters.client = key;
+    if ((! caption) && (filters.client == key)) caption = value;
+    count++;
+  });
+  $('#pull-client-id').val(filters.client);
+  options.find('.caption').text(caption);
+  if (count <= 1) {
+    return;
+  }
+  var html = '';
+  $.map(clients, function (value, key) {
+    html += '<li><a href="#'+key+'">'+value+'</a></li>';
+  });
+  options.find('ul.dropdown-menu').html(html);
+  options.fadeIn();
+
+  $('#client-filter .dropdown-menu a').click(function(e) {
+    var a = $(this),
+        group = a.closest('.btn-group').removeClass('open');
+    group.find('.caption').text(a.text()).blur();
+    filters.client = a.attr('href').substring(1);
+    table.setProps({reload: false});
+    app.func.stop(e);
+  });
+  $('#pull-client .dropdown-menu a').click(function(e) {
+    var a = $(this),
+        group = a.closest('.btn-group').removeClass('open');
+    group.find('.caption').text(a.text()).blur();
+    $('#pull-client-id').val(a.attr('href').substring(1));
+    app.func.stop(e);
+  });
+}
 
 function _search() {
   var candidate = $('#search-text').val().replace(/\s/g,' ').replace(/　/g,' ');
   candidate = candidate.replace(/^\s+|\s+$/gm,'').toUpperCase();
   if (filters.text == candidate) return;
   filters.text = candidate;
-  table.setProps();
+  table.setProps({reload: false});
 }
 
 var last = {};
@@ -101,36 +152,48 @@ function _detail(arg) {
   }});
 }
 
-function _pull(name) {
+function _pull(client, name) {
   reload = true;
   $('#image-detail').modal('show');
+  var conditions = client ? {client: client} : {};
+
   _detail({
-    title: name, message: 'Now executing..\n\ndocker pull '+name, url: '/api/image/pull/'+name,
+    title: name, message: 'Now executing..\n\ndocker pull '+name,
+    url: '/api/image/pull/'+name, conditions: conditions,
     callback: function () {$('#progress-bar').fadeOut();}
   });
   var bar = $('#progress-bar').show().find('.progress-bar');
   bar.animate({width: '100%'}, {duration: 1000*45, easing: 'linear'});
 }
 
-function _tag(id, repository, tag) {
+function _tag(client, id, repository, tag) {
   var data = {repo: repository, tag: tag};
+  if (client) data.client = client;
+
   app.func.ajax({type: 'POST', url: '/api/image/tag/'+id, data: data, success: function (data) {
-    table.setProps();
+    table.setProps({reload: true});
   }});
+}
+
+function _client(multiple, single) {
+  var count = 0;
+  $.map(clients, function () {count++;});
+  return (count > 1) ? multiple : single;
 }
 
 var TableRow = React.createClass({
   inspect: function() {
     var tr = $(this.getDOMNode()),
         id = tr.attr('data-image-id'),
-        name = tr.attr('data-image-name');
-    _detail({title: name, url: '/api/image/inspect/'+id});
-    return false;
+        name = tr.attr('data-image-name'),
+        client = _client({client: tr.attr('data-client-id')}, '');
+    _detail({title: name, url: '/api/image/inspect/'+id, conditions: client});
   },
   history: function() {
-    var name = $(this.getDOMNode()).attr('data-image-name');
-    location.href = '/image/history/'+name;
-    return false;
+    var tr = $(this.getDOMNode()),
+        name = tr.attr('data-image-name'),
+        client = _client('?client='+tr.attr('data-client-id'), '');
+    location.href = '/image/history/' + name + client;
   },
   run: function() {
     var tr = $(this.getDOMNode()),
@@ -140,55 +203,56 @@ var TableRow = React.createClass({
     $('#run-scripts').val('docker run ' + name);
     popup.find('.detail-title').text('Run from ' + name);
     popup.modal('show');
-    return false;
   },
   containers: function() {
-    var name = $(this.getDOMNode()).attr('data-image-name');
-    location.href = '/?q='+name;
-    return false;
+    var tr = $(this.getDOMNode()),
+        container = tr.attr('data-image-name'),
+        client = _client('&c='+tr.attr('data-client-id'), '');
+    location.href = '/?q='+container+client;
   },
   pull: function() {
     var tr = $(this.getDOMNode()),
-        name = tr.attr('data-image-name');
-    _pull(name);
-    return false;
+        name = tr.attr('data-image-name'),
+        client = _client(tr.attr('data-client-id'), '');
+    _pull(client, name);
   },
   rmi: function() {
     var tr = $(this.getDOMNode()),
         id = tr.attr('data-image-id'),
-        name = tr.attr('data-image-name');
+        name = tr.attr('data-image-name'),
+        client = _client({client: tr.attr('data-client-id')}, '');
     if ((name == '') || (name == '<none>:<none>')) {
       name = id;
     }
     if (!window.confirm('Are you sure to remove image: '+name)) {
       return;
     }
-    app.func.ajax({type: 'POST', url: '/api/image/rmi/'+name, success: function (data) {
+    app.func.ajax({type: 'POST', url: '/api/image/rmi/'+name, data: client, success: function (data) {
       if (data != 'removed successfully.') {
         alert(data);
         return;
       }
-      table.setProps();
+      table.setProps({reload: true});
     }});
-    return false;
   },
   tag: function() {
     var tr = $(this.getDOMNode()),
         id = tr.attr('data-image-id'),
         name = tr.attr('data-image-name'),
+        client = _client(tr.attr('data-client-id'), ''),
         popup = $('#image-tag');
     popup.find('.title').text(name);
+    popup.find('.client').val(client);
     popup.find('.image-id').val(id);
     popup.find('.repository').val(name.substring(0, name.indexOf(':')));
     popup.find('.tag').val(name.substring(name.indexOf(':') + 1));
     popup.modal('show');
-    return false;
   },
   render: function() {
     var image = this.props.content.image,
         name = this.props.content.tag;
     return (
-        <tr key={this.props.index} data-image-id={image.id.substring(0, 20)} data-image-name={name}>
+        <tr data-client-id={this.props.content.client} data-image-id={image.id.substring(0, 20)} data-image-name={name}>
           <td className="data-index">{image.id.substring(0, 10)}</td>
           <td className="data-name"><ul className="nav">
             <li className="dropdown">
@@ -214,29 +278,79 @@ var TableRow = React.createClass({
 
 var Table = React.createClass({
   getInitialState: function() {
-    return {data: []};
+    return {data: {client: '', images: []}};
   },
   load: function(sender) {
-    var conditions = {q: filters.text};
-    app.func.ajax({type: 'GET', url: '/api/images', data: conditions, success: function (data) {
-      $('#count').text(data.length + ' image' + ((data.length > 1) ? 's' : ''));
-      sender.setState({data: data});
+    clients = {};
+    app.func.ajax({type: 'GET', url: '/api/images', success: function (data) {
+      candidates = data;
+      $.map(candidates, function (candidate) {
+        clients[''+candidate.client.id] = candidate.client.endpoint.replace(/^.*:\/\//, '').replace(/:.*$/, '');
+      });
+      _setClientOption();
+      sender.setState({data: sender.filter()});
     }});
+  },
+  filter: function() {
+    var data = {};
+    $.map(candidates, function (candidate) {
+      if (candidate.client.id == filters.client) {
+        data = {
+          client: candidate.client,
+          images: candidate.images
+        };
+      }
+    });
+    return data;
   },
   componentDidMount: function() {
     this.load(this);
   },
-  componentWillReceiveProps: function() {
-    this.load(this);
+  componentWillReceiveProps: function(arg) {
+    if (arg.reload) {
+      this.load(this);
+      return;
+    }
+    this.setState({data: this.filter()});
   },
   render: function() {
-    var rows = this.state.data.map(function(record, index) {
-      return record.repoTags.map(function(tag, tagIndex) {
-        return (
-            <TableRow key={record.name} index={index*100+tagIndex} content={{image: record, tag: tag}} />
-        );
+    var count = 0;
+    if (this.state.data.client) {
+      var clientId = this.state.data.client.id;
+
+      var rows = this.state.data.images.map(function(image, index) {
+        if (filters.text != '') {
+          var match = true;
+          $.map(filters.text.split(' '), function (word) {
+            var innerMath = (image.id.substring(0, 10).toUpperCase().indexOf(word) > -1);
+            $.map(image.repoTags, function (tag) {
+              innerMath |= (tag.toUpperCase().indexOf(word) > -1);
+            });
+            match &= innerMath;
+          });
+          if (! match) return;
+        }
+        image.repoTags.sort(function (a, b) {
+          if (a.tag < b.tag)
+            return -1;
+          if (a.tag > b.tag)
+            return 1;
+          return 0;
+        });
+
+        return image.repoTags.map(function(tag, tagIndex) {
+          count++;
+          return (
+              <TableRow key={index*1000+tagIndex} content={{
+                  client: clientId,
+                  image: image,
+                  tag: tag
+              }} />
+          );
+        });
       });
-    });
+    }
+    $('#count').text(count + ' image' + ((count > 1) ? 's' : ''));
     return (
         <table className="table table-striped table-hover">
           <thead>

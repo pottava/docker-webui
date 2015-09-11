@@ -2,6 +2,7 @@
 {{ define "css" }}<link rel="stylesheet" href="{{ .StaticFileHost }}/assets/css/app/index.css">{{ end }}
 {{ define "js" }}<script type="text/jsx" src="{{ .StaticFileHost }}/assets/js/containers/statlog.jsx"></script>{{ end }}
 {{ define "content" }}
+  <input id="client-id" type="hidden" value="{{ .Data.Client }}">
   <input id="container-id" type="hidden" value="{{ .Data.ID }}">
 
   <div style="position: relative;">
