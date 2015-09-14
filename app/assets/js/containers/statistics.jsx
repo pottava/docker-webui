@@ -14,6 +14,7 @@ var lineChartCPU = nv.models.lineChart()
               .x(function(d) { return d[0] })
               .y(function(d) { return d[1]/100 })
               .color(d3.scale.category10().range())
+              .showLegend(false)
               .useInteractiveGuideline(true);
 lineChartCPU.xAxis.tickFormat(function(d) {return d3.time.format('%X')(new Date(d))});
 lineChartCPU.yAxis.tickFormat(d3.format(',.1%'));
@@ -23,6 +24,7 @@ var lineChartMem = nv.models.lineChart()
               .x(function(d) { return d[0] })
               .y(function(d) { return d[1]/100 })
               .color(d3.scale.category10().range())
+              .showLegend(false)
               .useInteractiveGuideline(true);
 lineChartMem.xAxis.tickFormat(function(d) {return d3.time.format('%X')(new Date(d))});
 lineChartMem.yAxis.tickFormat(d3.format(',.1%'));
@@ -32,6 +34,7 @@ var pieChartCPU = nv.models.pieChart()
               .x(function(d) { return d.label })
               .y(function(d) { return d.value })
               .color(d3.scale.category10().range())
+              .showLegend(false)
               .showLabels(true)
               .labelThreshold(.05)
               .labelType("percent")
@@ -42,6 +45,7 @@ var pieChartMem = nv.models.pieChart()
               .x(function(d) { return d.label })
               .y(function(d) { return d.value })
               .color(d3.scale.category10().range())
+              .showLegend(false)
               .showLabels(true)
               .labelThreshold(.05)
               .labelType("percent")

@@ -3,12 +3,14 @@ package controllers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	api "github.com/fsouza/go-dockerclient"
 
+	"github.com/pottava/docker-webui/app/config"
 	"github.com/pottava/docker-webui/app/engine"
 	util "github.com/pottava/docker-webui/app/http"
 	"github.com/pottava/docker-webui/app/logs"
@@ -17,21 +19,25 @@ import (
 )
 
 func init() {
+	cfg := config.NewConfig()
 
 	http.Handle("/container/top/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Path[len("/container/top/"):]
 		client, _ := util.RequestGetParam(r, "client")
-		util.RenderHTML(w, []string{"containers/top.tmpl"}, struct{ ID, Client string }{id, client}, nil)
+		params := struct{ ID, Name, Client string }{id, _label(id, client, cfg.LabelOverrideNames), client}
+		util.RenderHTML(w, []string{"containers/top.tmpl"}, params, nil)
 	}))
 	http.Handle("/container/statlog/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Path[len("/container/statlog/"):]
 		client, _ := util.RequestGetParam(r, "client")
-		util.RenderHTML(w, []string{"containers/statlog.tmpl"}, struct{ ID, Client string }{id, client}, nil)
+		params := struct{ ID, Name, Client string }{id, _label(id, client, cfg.LabelOverrideNames), client}
+		util.RenderHTML(w, []string{"containers/statlog.tmpl"}, params, nil)
 	}))
 	http.Handle("/container/changes/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Path[len("/container/changes/"):]
 		client, _ := util.RequestGetParam(r, "client")
-		util.RenderHTML(w, []string{"containers/changes.tmpl"}, struct{ ID, Client string }{id, client}, nil)
+		params := struct{ ID, Name, Client string }{id, _label(id, client, cfg.LabelOverrideNames), client}
+		util.RenderHTML(w, []string{"containers/changes.tmpl"}, params, nil)
 	}))
 	http.Handle("/statistics", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		util.RenderHTML(w, []string{"containers/statistics.tmpl"}, nil, nil)
@@ -109,8 +115,15 @@ func init() {
 				for _, container := range containers {
 					go func(container api.APIContainers) {
 						stat, _ := docker.Stats(container.ID, count)
+
+						name := strings.Join(container.Names, ",")
+						if !misc.ZeroOrNil(cfg.LabelOverrideNames) {
+							if label, found := container.Labels[cfg.LabelOverrideNames]; found {
+								name = "*" + label
+							}
+						}
 						c <- models.DockerStats{
-							Name:  strings.Join(container.Names, ","),
+							Name:  name,
 							Stats: stat,
 						}
 					}(container)
@@ -404,6 +417,41 @@ func init() {
 		}
 		util.RenderJSON(w, restarted, nil)
 	}))
+}
+
+func _label(id, client, key string) string {
+	var docker *engine.Client
+	if misc.ZeroOrNil(id) {
+		if c, err := engine.Docker(); err == nil {
+			docker = c
+		}
+	}
+	if docker == nil {
+		masters, err := models.LoadDockerClients()
+		if err != nil {
+			return id
+		}
+		for _, master := range masters {
+			log.Print(master.ID)
+			if master.ID == client {
+				engine.Configure(master.Endpoint, master.CertPath, master.IsDefault)
+				if c, err := engine.Docker(); err == nil {
+					docker = c
+				}
+				break
+			}
+		}
+	}
+	if docker != nil {
+		meta := docker.InspectContainer(id)
+		if meta.Error != nil {
+			return id
+		}
+		if name, found := meta.Container.Config.Labels[key]; found {
+			return name
+		}
+	}
+	return id
 }
 
 func renderErrorJSON(w http.ResponseWriter, err error) {

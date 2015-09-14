@@ -6,7 +6,7 @@
   <input id="container-id" type="hidden" value="{{ .Data.ID }}">
 
   <div style="position: relative;">
-    <h2 style="margin: 25px 0 20px 0;">Statistics of {{ .Data.ID }}</h2>
+    <h2 style="margin: 25px 0 20px 0;">Statistics of {{ .Data.Name }}</h2>
     <div style="position: absolute;top: 0;right: 10px;">
       <p id="actions" class="bs-component">
         <a href="#1" class="btn btn-default" data-hover="btn-primary">Restart</a>
@@ -18,7 +18,7 @@
   <div id="statistics" style="clear: both;"></div>
 
   <div style="position: relative;">
-    <h2 style="margin: 25px 0 20px 0;">Logs of {{ .Data.ID }}</h2>
+    <h2 style="margin: 25px 0 20px 0;">Logs of {{ .Data.Name }}</h2>
     <div class="logs" style="position: absolute;top: 40px;right: 10px;display: none;">
       <div class="btn-group">
         <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" style="margin: 0 5px 0 0;">
