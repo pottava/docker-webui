@@ -63,8 +63,9 @@ func TestComplete(t *testing.T) {
 		return
 	}
 	actual = *actual.merge(Config{
-		DockerCertPath: []string{"cert-path"},
-		StaticFileHost: "cdn-host",
+		LabelOverrideNames: "com.github.pottava.name",
+		DockerCertPath:     []string{"cert-path"},
+		StaticFileHost:     "cdn-host",
 	})
 	if !actual.complete() {
 		t.Errorf("Unexpected result. %v", actual)

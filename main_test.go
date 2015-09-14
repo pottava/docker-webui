@@ -12,7 +12,8 @@ import (
 )
 
 func TestIndex(t *testing.T) {
-	ts := httptest.NewServer(http.Handler(index()))
+	cfg := config.NewConfig()
+	ts := httptest.NewServer(http.Handler(index(cfg)))
 	defer ts.Close()
 
 	res, err := http.Get(ts.URL)

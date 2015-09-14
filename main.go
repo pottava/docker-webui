@@ -17,7 +17,7 @@ func main() {
 	cfg := config.NewConfig()
 	logs.Debug.Print("[config] " + cfg.String())
 
-	http.Handle("/", index())
+	http.Handle("/", index(cfg))
 	http.HandleFunc("/alive", alive)
 	http.HandleFunc("/version", version)
 	http.Handle("/assets/", assets(cfg))
@@ -26,13 +26,14 @@ func main() {
 	logs.Fatal.Print(http.ListenAndServe(":"+fmt.Sprint(cfg.Port), nil))
 }
 
-func index() http.Handler {
+func index(cfg *config.Config) http.Handler {
 	return misc.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
 			return
 		}
-		misc.RenderHTML(w, []string{"containers/index.tmpl"}, nil, nil)
+		params := struct{ Label string }{cfg.LabelOverrideNames}
+		misc.RenderHTML(w, []string{"containers/index.tmpl"}, params, nil)
 	})
 }
 func alive(w http.ResponseWriter, r *http.Request) {

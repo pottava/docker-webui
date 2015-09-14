@@ -10,15 +10,16 @@ import (
 
 // DockerContainer represents a container
 type DockerContainer struct {
-	ID         string           `json:"id"`
-	Image      string           `json:"image,omitempty"`
-	Command    string           `json:"command,omitempty"`
-	Created    int64            `json:"created,omitempty"`
-	Status     string           `json:"status,omitempty"`
-	Ports      []docker.APIPort `json:"ports,omitempty"`
-	SizeRw     int64            `json:"sizeRw,omitempty"`
-	SizeRootFs int64            `json:"sizeRootFs,omitempty"`
-	Names      []string         `json:"names,omitempty"`
+	ID         string            `json:"id"`
+	Image      string            `json:"image,omitempty"`
+	Command    string            `json:"command,omitempty"`
+	Created    int64             `json:"created,omitempty"`
+	Status     string            `json:"status,omitempty"`
+	Ports      []docker.APIPort  `json:"ports,omitempty"`
+	SizeRw     int64             `json:"sizeRw,omitempty"`
+	SizeRootFs int64             `json:"sizeRootFs,omitempty"`
+	Names      []string          `json:"names,omitempty"`
+	Labels     map[string]string `json:"labels,omitempty"`
 }
 
 // DockerContainers represents list of DockerContainer
@@ -90,6 +91,7 @@ func convertContainer(c docker.APIContainers) DockerContainer {
 		SizeRw:     c.SizeRw,
 		SizeRootFs: c.SizeRootFs,
 		Names:      make([]string, len(c.Names)),
+		Labels:     c.Labels,
 	}
 	for idx, name := range c.Names {
 		container.Names[idx] = name
@@ -106,7 +108,8 @@ func (c DockerContainer) contains(words []string) bool {
 			strings.Contains(container.Command, word) ||
 			strings.Contains(container.Status, word) ||
 			inAPIPorts(container.Ports, word) ||
-			inStringArray(container.Names, word))
+			inStringArray(container.Names, word) ||
+			inMapString(container.Labels, word))
 	}
 	return match
 }
@@ -125,6 +128,14 @@ func inAPIPorts(array []docker.APIPort, word string) bool {
 func inStringArray(array []string, word string) bool {
 	match := false
 	for _, value := range array {
+		match = match || strings.Contains(value, word)
+	}
+	return match
+}
+
+func inMapString(m map[string]string, word string) bool {
+	match := false
+	for _, value := range m {
 		match = match || strings.Contains(value, word)
 	}
 	return match
@@ -151,6 +162,10 @@ func (c DockerContainer) toUpperFields() DockerContainer {
 	container.Names = make([]string, len(c.Names))
 	for idx, name := range c.Names {
 		container.Names[idx] = strings.ToUpper(name)
+	}
+	container.Labels = map[string]string{}
+	for key, value := range c.Labels {
+		container.Labels[key] = strings.ToUpper(value)
 	}
 	return container
 }

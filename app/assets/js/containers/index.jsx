@@ -1,5 +1,5 @@
 
-var table, query = app.func.query('q'), clients = {}, candidates = [],
+var table, query = app.func.query('q'), clients = {}, candidates = [], labelOverrideNames = '',
     filters = {client: app.func.query('c', -1), status: app.storage.get('filters-status', 3), text: ''};
 if (query != '') {
   filters.text = query.replace(/\s/g,' ').replace(/　/g,' ');
@@ -9,6 +9,7 @@ if (query != '') {
 $(document).ready(function () {
   $('#menu-containers').addClass('active');
   $('#container-detail pre').css({height: ($(window).height()-200)+'px'})
+  labelOverrideNames = $('#override-label-id').val();
 
   var search = $('#search-text').blur(_search);
   if (query != '') search.val(query);
@@ -258,6 +259,13 @@ var TableRow = React.createClass({
       $.map(container.names, function (n) {
         names += n.replace('/', '') + ', ';
         name = n.replace('/', '');
+      });
+    }
+    if (labelOverrideNames && container.labels) {
+      $.map(container.labels, function (value, key) {
+        if (key == labelOverrideNames) {
+          names = value + '..';
+        }
       });
     }
     if (command.length > 13) {

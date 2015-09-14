@@ -62,14 +62,6 @@ func (i DockerImage) contains(words []string) bool {
 	return match
 }
 
-func inMapString(m map[string]string, word string) bool {
-	match := false
-	for _, value := range m {
-		match = match || strings.Contains(value, word)
-	}
-	return match
-}
-
 func (i DockerImage) toUpperFields() DockerImage {
 	image := DockerImage{}
 	image.ID = strings.ToUpper(i.ID)
