@@ -22,4 +22,5 @@ type Config struct {
 	StaticFileHost         string `trim:"true"`
 	StaticFilePath         string `trim:"true"`
 	PreventSelfStop        bool
+	HiddenContainers       []string
 }

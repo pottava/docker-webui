@@ -103,17 +103,18 @@ func init() {
 		d := make(chan statistics, len(dockers))
 		for _, docker := range dockers {
 			go func(docker *engine.Client) {
-				containers, err := docker.ListContainers(models.ListContainerOption(3))
+				candidate, err := docker.ListContainers(models.ListContainerOption(3))
 				if err != nil {
 					renderErrorJSON(w, err)
 					return
 				}
+				containers := models.SearchContainers(candidate, []string{})
 				c := make(chan models.DockerStats, len(containers))
 				inner := map[string][]*api.Stats{}
 				count := util.RequestGetParamI(r, "count", 1)
 
 				for _, container := range containers {
-					go func(container api.APIContainers) {
+					go func(container models.DockerContainer) {
 						stat, _ := docker.Stats(container.ID, count)
 
 						name := strings.Join(container.Names, ",")

@@ -35,6 +35,7 @@ func defaultConfig() Config {
 		StaticFileHost:         "",
 		StaticFilePath:         gopath + "/src/github.com/pottava/docker-webui/app",
 		PreventSelfStop:        true,
+		HiddenContainers:       []string{},
 	}
 }
 
@@ -74,6 +75,7 @@ func environmentConfig() Config {
 		StaticFileHost:         os.Getenv("APP_STATIC_FILE_HOST"),
 		StaticFilePath:         os.Getenv("APP_STATIC_FILE_PATH"),
 		PreventSelfStop:        misc.ParseBool(os.Getenv("APP_PREVENT_SELF_STOP")),
+		HiddenContainers:       toStringArray(os.Getenv("APP_HIDDEN_CONTAINERS")),
 	}
 }
 
@@ -157,10 +159,12 @@ func (config *Config) String() string {
 		"Name: %v, Port: %v, LogLevel: %v, LabelOverrideNames: %v, DockerEndpoints: %v, DockerCertPath: %v, "+
 			"DockerPullBeginTimeout: %v, DockerPullTimeout: %v, DockerStatTimeout: %v, DockerStartTimeout: %v, "+
 			"DockerStopTimeout: %v, DockerRestartTimeout: %v, DockerKillTimeout: %v, DockerRmTimeout: %v, "+
-			"DockerCommitTimeout: %v, StaticFileHost: %v, StaticFilePath: %v, PreventSelfStop: %v",
+			"DockerCommitTimeout: %v, StaticFileHost: %v, StaticFilePath: %v, PreventSelfStop: %v, "+
+			"HiddenContainers: %v",
 		config.Name, config.Port, config.LogLevel, config.LabelOverrideNames,
 		config.DockerEndpoints, config.DockerCertPath, config.DockerPullBeginTimeout,
 		config.DockerPullTimeout, config.DockerStatTimeout, config.DockerStartTimeout, config.DockerStopTimeout,
 		config.DockerRestartTimeout, config.DockerKillTimeout, config.DockerRmTimeout,
-		config.DockerCommitTimeout, config.StaticFileHost, config.StaticFilePath, config.PreventSelfStop)
+		config.DockerCommitTimeout, config.StaticFileHost, config.StaticFilePath, config.PreventSelfStop,
+		config.HiddenContainers)
 }

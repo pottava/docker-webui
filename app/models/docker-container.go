@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	docker "github.com/fsouza/go-dockerclient"
+	"github.com/pottava/docker-webui/app/config"
+	"github.com/pottava/docker-webui/app/misc"
 )
 
 // DockerContainer represents a container
@@ -29,6 +31,12 @@ type DockerContainers []DockerContainer
 type DockerStats struct {
 	Name  string
 	Stats []*docker.Stats
+}
+
+var cfg *config.Config
+
+func init() {
+	cfg = config.NewConfig()
 }
 
 // ListContainerOption returns docker.ListContainersOptions according to the flag
@@ -72,6 +80,25 @@ func SearchContainers(containers []docker.APIContainers, words []string) DockerC
 	results := DockerContainers{}
 	for _, c := range containers {
 		container := convertContainer(c)
+
+		// hide specified named containers
+		if !misc.ZeroOrNil(cfg.HiddenContainers) {
+			names := container.Names
+			hide := false
+			if !misc.ZeroOrNil(cfg.LabelOverrideNames) {
+				if value, found := container.Labels[cfg.LabelOverrideNames]; found {
+					names = []string{"*" + value}
+				}
+			}
+			for _, name := range names {
+				hide = hide || inStringArray(cfg.HiddenContainers, name[1:])
+			}
+			if hide {
+				continue
+			}
+		}
+
+		// search words
 		if container.contains(words) {
 			results = append(results, container)
 		}

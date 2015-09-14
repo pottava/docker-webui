@@ -49,6 +49,7 @@ func TestMerge(t *testing.T) {
 		StaticFileHost:         "",
 		StaticFilePath:         gopath + "/src/github.com/pottava/docker-webui/app",
 		PreventSelfStop:        true,
+		HiddenContainers:       []string{},
 	}
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("Expected %v, but got %v", expected, actual)
@@ -66,6 +67,7 @@ func TestComplete(t *testing.T) {
 		LabelOverrideNames: "com.github.pottava.name",
 		DockerCertPath:     []string{"cert-path"},
 		StaticFileHost:     "cdn-host",
+		HiddenContainers:   []string{"some-name"},
 	})
 	if !actual.complete() {
 		t.Errorf("Unexpected result. %v", actual)

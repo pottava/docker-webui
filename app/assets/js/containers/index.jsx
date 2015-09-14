@@ -324,7 +324,6 @@ var Table = React.createClass({
       });
       _setClientOption();
       sender.setState({data: sender.filter()});
-      $('#count').text(data.length + ' container' + ((data.length > 1) ? 's' : ''));
     }});
   },
   filter: function() {
@@ -350,7 +349,8 @@ var Table = React.createClass({
     this.setState({data: this.filter()});
   },
   render: function() {
-    var multiple = (this.state.data.length > 1);
+    var multiple = (this.state.data.length > 1),
+        count = 0;
     var rows = this.state.data.map(function(host, index) {
       var client = host.client;
       host.containers.sort(function (a, b) {
@@ -363,7 +363,9 @@ var Table = React.createClass({
 
       return host.containers.map(function(container, conIndex) {
         var key = container.id.substring(0, 10);
-        if (filters.text != '') {
+        if (filters.text == '') {
+          count++;
+        } else {
           var match = true;
           $.map(filters.text.split(' '), function (word) {
             var innerMath = (container.id.substring(0, 10).toUpperCase().indexOf(word) > -1);
@@ -384,7 +386,10 @@ var Table = React.createClass({
             match &= innerMath;
           });
           if (! match) return;
+          count++;
         }
+        $('#count').text(count + ' container' + ((count > 1) ? 's' : ''));
+
         return <TableRow key={key+'@'+client.id} index={key+'@'+index} content={{
             endpoint: _endpoint(multiple, client.endpoint),
             client: client, container: container
