@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -47,12 +48,14 @@ func init() {
 
 	if cfg.PreventSelfStop {
 		if candidate, err := misc.ShellExec([]string{"bash", "-c",
-			"cat /proc/self/cgroup | grep -o -e 'docker-.*.scope' | head -n 1"}); err == nil {
-			candidate = strings.Replace(candidate, "docker-", "", -1)
-			candidate = strings.Replace(candidate, ".scope", "", -1)
-			containerID = candidate[:64]
-			logs.Debug.Printf("Docker container ID: %s", containerID)
+			"cat /proc/self/cgroup | grep -o -e 'docker.*' | head -n 1"}); err == nil {
+			pattern := regexp.MustCompile(`^docker[^0-9a-zA-Z]*`)
+			candidate = pattern.ReplaceAllString(candidate, "")
+			if len(candidate) >= 64 {
+				containerID = candidate[:64]
+			}
 		}
+		logs.Debug.Printf("Docker container ID: %s", containerID)
 	}
 	for index, endpoint := range cfg.DockerEndpoints {
 		if len(cfg.DockerCertPath) > index {
