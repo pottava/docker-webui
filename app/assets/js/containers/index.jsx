@@ -219,21 +219,23 @@ var TableRow = React.createClass({
   },
   rename: function() {
     var tr = $(this.getDOMNode()),
+        caption = tr.find('.dropdown a.dropdown-toggle').text(),
         name = tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
         popup = $('#container-name');
-    popup.find('.title').text(name);
+    popup.find('.title').text(caption);
     popup.find('input').val(name);
     popup.find('.client-id').val(tr.attr('data-client-id'));
     popup.modal('show');
   },
   commit: function() {
     var tr = $(this.getDOMNode()),
-        name = tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
+        name = tr.find('.dropdown a.dropdown-toggle').text(),
         repo = tr.find('.image').text(),
-        popup = $('#container-commit');
+        popup = $('#container-commit'),
+        index = repo.indexOf(':');
     popup.find('.title').text(name);
-    popup.find('.repository').val(repo.substring(0, repo.indexOf(':')));
-    popup.find('.tag').val(repo.substring(repo.indexOf(':') + 1));
+    popup.find('.repository').val(((index == 0) ? repo : repo.substring(0, index)));
+    popup.find('.tag').val(((index == 0) ? '' : repo.substring(index + 1)));
     popup.find('.client-id').val(tr.attr('data-client-id'));
     popup.modal('show');
   },
