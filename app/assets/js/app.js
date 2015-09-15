@@ -3,6 +3,7 @@ var app = {};
 (function($) {
 	app.func = {
 		ajax : _ajax,
+		link : _link,
 		stop : _stop,
 		trim : _trim,
 		query : _query,
@@ -30,6 +31,16 @@ var app = {};
 				console.log(arg.url, status, err.toString());
 			}
 		});
+	}
+	function _link(href, e) {
+		e = e || window.event;
+		if (!e)
+			return false;
+		if (e && (e.ctrlKey || e.metaKey)) {
+			window.open(href, '_blank');
+		} else {
+			location.href = href;
+		}
 	}
 	function _stop(e) {
 		e = e || window.event;

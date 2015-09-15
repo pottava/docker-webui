@@ -194,7 +194,7 @@ var TableRow = React.createClass({
     var tr = $(this.getDOMNode()),
         name = tr.attr('data-image-name'),
         client = _client('?client='+tr.attr('data-client-id'), '');
-    location.href = '/image/history/' + name + client;
+    app.func.link('/image/history/' + name + client);
   },
   run: function() {
     if (isViewOnly) return;
@@ -210,7 +210,7 @@ var TableRow = React.createClass({
     var tr = $(this.getDOMNode()),
         container = tr.attr('data-image-name'),
         client = _client('&c='+tr.attr('data-client-id'), '');
-    location.href = '/?q='+container+client;
+    app.func.link('/?q='+container+client);
   },
   pull: function() {
     if (isViewOnly) return;

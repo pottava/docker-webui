@@ -176,19 +176,19 @@ var TableRow = React.createClass({
     var tr = $(this.getDOMNode()),
         name = tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
         client = _client('?client='+tr.attr('data-client-id'), '');
-    location.href = '/container/top/'+name+client;
+    app.func.link('/container/top/'+name+client);
   },
   statlog: function() {
     var tr = $(this.getDOMNode()),
         name = tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
         client = _client('?client='+tr.attr('data-client-id'), '');
-    location.href = '/container/statlog/'+name+client;
+    app.func.link('/container/statlog/'+name+client);
   },
   changes: function() {
     var tr = $(this.getDOMNode()),
         name = tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
         client = _client('?client='+tr.attr('data-client-id'), '');
-    location.href = '/container/changes/'+name+client;
+    app.func.link('/container/changes/'+name+client);
   },
   _action: function (sender, arg) {
     var tr = $(this.getDOMNode()),
@@ -252,7 +252,7 @@ var TableRow = React.createClass({
     var tr = $(this.getDOMNode()),
         image = tr.find('.image').text(),
         client = _client('&c='+tr.attr('data-client-id'), '');
-    location.href = '/images?q='+image+client;
+    app.func.link('/images?q='+image+client);
   },
   render: function() {
     var props = this.props.content,

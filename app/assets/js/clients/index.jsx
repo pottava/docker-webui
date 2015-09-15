@@ -84,6 +84,7 @@ var TableRow = React.createClass({
           <td className="data-index endpoint">
             <a href="#" onClick={rowclass.handleDetail} style={{outline: 'none', textDecoration: 'none'}}>{client.endpoint}</a>
           </td>
+          <td className="data-index">{_find(info, 'Containers')}</td>
           <td className="data-index cert" style={{display: 'none'}}>{client.certPath}</td>
           <td className="data-index">{_find(info, 'Name')}</td>
           <td className="data-index">{_find(version, 'Version')}</td>
@@ -108,6 +109,9 @@ var Table = React.createClass({
   load: function(sender) {
     app.func.ajax({type: 'GET', url: '/api/clients', success: function (data) {
       $('#count').text(data.length + ' client' + ((data.length > 1) ? 's' : ''));
+      data.sort(function (a, b) {
+        return parseInt(_find(a.info, 'Name'), 10) - parseInt(_find(b.info, 'Name'), 10);
+      });
       sender.setState({data: data});
     }});
   },
@@ -126,6 +130,7 @@ var Table = React.createClass({
           <thead>
             <tr>
               <th>Endpoint</th>
+              <th>Containers</th>
               <th>Host Name</th>
               <th>Version</th>
               <th>API Version</th>
