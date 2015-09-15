@@ -32,7 +32,10 @@ func index(cfg *config.Config) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
-		params := struct{ Label string }{cfg.LabelOverrideNames}
+		params := struct {
+			Label    string
+			ViewOnly bool
+		}{cfg.LabelOverrideNames, cfg.ViewOnly}
 		misc.RenderHTML(w, []string{"containers/index.tmpl"}, params, nil)
 	})
 }

@@ -3,6 +3,7 @@
 {{ define "js" }}<script type="text/jsx" src="{{ .StaticFileHost }}/assets/js/containers/index.jsx"></script>{{ end }}
 {{ define "content" }}
   <input id="override-label-id" type="hidden" value="{{ .Data.Label }}">
+  <input id="mode-view-only" type="hidden" value="{{ .Data.ViewOnly }}">
 
   <div id="conditions" class="navbar-collapse">
     <div class="navbar-form navbar-left" role="search">

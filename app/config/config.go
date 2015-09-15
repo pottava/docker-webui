@@ -19,6 +19,7 @@ func defaultConfig() Config {
 	return Config{
 		Name:                   "docker web-ui",
 		Port:                   9000,
+		ViewOnly:               false,
 		LogLevel:               4,
 		LabelOverrideNames:     "",
 		DockerEndpoints:        []string{"unix:///var/run/docker.sock"},
@@ -59,6 +60,7 @@ func environmentConfig() Config {
 	return Config{
 		Name:                   os.Getenv("APP_NAME"),
 		Port:                   misc.ParseUint16(os.Getenv("APP_PORT")),
+		ViewOnly:               misc.ParseBool(os.Getenv("APP_VIEW_ONLY")),
 		LogLevel:               misc.Atoi(os.Getenv("APP_LOG_LEVEL")),
 		LabelOverrideNames:     os.Getenv("APP_LABEL_OVERRIDE_NAMES"),
 		DockerEndpoints:        toStringArray(os.Getenv("DOCKER_HOST")),
@@ -156,12 +158,12 @@ func (config *Config) trimWhitespace() {
 // String returns a string representation of the config.
 func (config *Config) String() string {
 	return fmt.Sprintf(
-		"Name: %v, Port: %v, LogLevel: %v, LabelOverrideNames: %v, DockerEndpoints: %v, DockerCertPath: %v, "+
+		"Name: %v, Port: %v, ViewOnly: %v, LogLevel: %v, LabelOverrideNames: %v, DockerEndpoints: %v, DockerCertPath: %v, "+
 			"DockerPullBeginTimeout: %v, DockerPullTimeout: %v, DockerStatTimeout: %v, DockerStartTimeout: %v, "+
 			"DockerStopTimeout: %v, DockerRestartTimeout: %v, DockerKillTimeout: %v, DockerRmTimeout: %v, "+
 			"DockerCommitTimeout: %v, StaticFileHost: %v, StaticFilePath: %v, PreventSelfStop: %v, "+
 			"HiddenContainers: %v",
-		config.Name, config.Port, config.LogLevel, config.LabelOverrideNames,
+		config.Name, config.Port, config.ViewOnly, config.LogLevel, config.LabelOverrideNames,
 		config.DockerEndpoints, config.DockerCertPath, config.DockerPullBeginTimeout,
 		config.DockerPullTimeout, config.DockerStatTimeout, config.DockerStartTimeout, config.DockerStopTimeout,
 		config.DockerRestartTimeout, config.DockerKillTimeout, config.DockerRmTimeout,

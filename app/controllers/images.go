@@ -3,15 +3,18 @@ package controllers
 import (
 	"net/http"
 
+	"github.com/pottava/docker-webui/app/config"
 	"github.com/pottava/docker-webui/app/engine"
 	util "github.com/pottava/docker-webui/app/http"
 	"github.com/pottava/docker-webui/app/models"
 )
 
 func init() {
+	cfg := config.NewConfig()
 
 	http.Handle("/images", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		util.RenderHTML(w, []string{"images/index.tmpl"}, nil, nil)
+		params := struct{ ViewOnly bool }{cfg.ViewOnly}
+		util.RenderHTML(w, []string{"images/index.tmpl"}, params, nil)
 	}))
 	http.Handle("/image/history/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Path[len("/image/history/"):]

@@ -1,7 +1,7 @@
 
 var table, query = app.func.query('q'), clients = {}, candidates = [],
     filters = {client: app.func.query('c', false), text: ''},
-    reload = false;
+    reload = false, isViewOnly = false;
 if (query != '') {
   filters.text = query.replace(/\s/g,' ').replace(/　/g,' ');
   filters.text = filters.text.replace(/^\s+|\s+$/gm,'').toUpperCase();
@@ -10,6 +10,7 @@ if (query != '') {
 $(document).ready(function () {
   $('#menu-images').addClass('active');
   $('#image-detail pre').css({height: ($(window).height()-200)+'px'})
+  isViewOnly = ($('#mode-view-only').val() == 'true');
 
   var search = $('#search-text').blur(_search);
   if (query != '') search.val(query);
@@ -196,6 +197,7 @@ var TableRow = React.createClass({
     location.href = '/image/history/' + name + client;
   },
   run: function() {
+    if (isViewOnly) return;
     var tr = $(this.getDOMNode()),
         id = tr.attr('data-image-id'),
         name = tr.attr('data-image-name'),
@@ -211,12 +213,14 @@ var TableRow = React.createClass({
     location.href = '/?q='+container+client;
   },
   pull: function() {
+    if (isViewOnly) return;
     var tr = $(this.getDOMNode()),
         name = tr.attr('data-image-name'),
         client = _client(tr.attr('data-client-id'), '');
     _pull(client, name);
   },
   rmi: function() {
+    if (isViewOnly) return;
     var tr = $(this.getDOMNode()),
         id = tr.attr('data-image-id'),
         name = tr.attr('data-image-name'),
@@ -236,6 +240,7 @@ var TableRow = React.createClass({
     }});
   },
   tag: function() {
+    if (isViewOnly) return;
     var tr = $(this.getDOMNode()),
         id = tr.attr('data-image-id'),
         name = tr.attr('data-image-name'),
@@ -251,7 +256,27 @@ var TableRow = React.createClass({
   render: function() {
     var image = this.props.content.image,
         name = this.props.content.tag;
-    return (
+    if (isViewOnly) {
+      return (
+        <tr data-client-id={this.props.content.client} data-image-id={image.id.substring(0, 20)} data-image-name={name}>
+          <td className="data-index">{image.id.substring(0, 10)}</td>
+          <td className="data-name"><ul className="nav">
+            <li className="dropdown">
+              <a className="dropdown-toggle" data-toggle="dropdown" href="#" aria-expanded="true">{name}</a>
+              <ul className="dropdown-menu">
+                <li><a onClick={this.inspect}>inspect</a></li>
+                <li><a onClick={this.history}>history</a></li>
+                <li className="divider"></li>
+                <li><a onClick={this.containers}>containers</a></li>
+              </ul>
+            </li>
+          </ul></td>
+          <td className="data-name">{app.func.byteFormat(image.virtualSize)}</td>
+          <td className="data-name">{app.func.relativeTime(new Date(image.created * 1000))}</td>
+        </tr>
+      );
+    } else {
+      return (
         <tr data-client-id={this.props.content.client} data-image-id={image.id.substring(0, 20)} data-image-name={name}>
           <td className="data-index">{image.id.substring(0, 10)}</td>
           <td className="data-name"><ul className="nav">
@@ -272,7 +297,8 @@ var TableRow = React.createClass({
           <td className="data-name">{app.func.byteFormat(image.virtualSize)}</td>
           <td className="data-name">{app.func.relativeTime(new Date(image.created * 1000))}</td>
         </tr>
-    );
+      );
+    }
   }
 });
 

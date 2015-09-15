@@ -1,6 +1,7 @@
 
 var table, query = app.func.query('q'), clients = {}, candidates = [], labelOverrideNames = '',
-    filters = {client: app.func.query('c', -1), status: app.storage.get('filters-status', 3), text: ''};
+    filters = {client: app.func.query('c', -1), status: app.storage.get('filters-status', 3), text: ''},
+    isViewOnly = false;
 if (query != '') {
   filters.text = query.replace(/\s/g,' ').replace(/　/g,' ');
   filters.text = filters.text.replace(/^\s+|\s+$/gm,'').toUpperCase();
@@ -10,6 +11,7 @@ $(document).ready(function () {
   $('#menu-containers').addClass('active');
   $('#container-detail pre').css({height: ($(window).height()-200)+'px'})
   labelOverrideNames = $('#override-label-id').val();
+  isViewOnly = ($('#mode-view-only').val() == 'true');
 
   var search = $('#search-text').blur(_search);
   if (query != '') search.val(query);
@@ -203,21 +205,27 @@ var TableRow = React.createClass({
     app.func.ajax({type: 'POST', url: '/api/container/'+arg.action+'/'+name, data: client, success: success});
   },
   restart: function() {
+    if (isViewOnly) return;
     this._action(this, {action: 'restart'});
   },
   start: function() {
+    if (isViewOnly) return;
     this._action(this, {action: 'start'});
   },
   stop: function() {
+    if (isViewOnly) return;
     this._action(this, {action: 'stop', msg: 'stopped'});
   },
   kill: function() {
+    if (isViewOnly) return;
     this._action(this, {action: 'kill'});
   },
   rm: function() {
+    if (isViewOnly) return;
     this._action(this, {action: 'rm', msg: 'removed', confirm: 'Are you sure to remove the container?\nID: '});
   },
   rename: function() {
+    if (isViewOnly) return;
     var tr = $(this.getDOMNode()),
         caption = tr.find('.dropdown a.dropdown-toggle').text(),
         name = tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
@@ -228,6 +236,7 @@ var TableRow = React.createClass({
     popup.modal('show');
   },
   commit: function() {
+    if (isViewOnly) return;
     var tr = $(this.getDOMNode()),
         name = tr.find('.dropdown a.dropdown-toggle').text(),
         repo = tr.find('.image').text(),
@@ -274,7 +283,33 @@ var TableRow = React.createClass({
       command = command.substring(0, 13) + '..';
     }
     status = status ? status.replace(/seconds*/, 'sec').replace(/minutes*/, 'min').replace(/About /, '') : '';
-    return (
+    if (isViewOnly) {
+      return (
+        <tr key={key + props.endpoint} data-client-id={props.client.id} data-container-id={key}>
+          <td className="data-index">{container.id.substring(0, 4)}</td>
+          <td className="data-name"><ul className="nav">
+            <li className="dropdown">
+              <a className="dropdown-toggle" data-toggle="dropdown" href="#" aria-expanded="true" data-container-name={name}>
+                <span>{names.substring(0, names.length-2) + props.endpoint}</span>
+              </a>
+              <ul className="dropdown-menu">
+                <li><a onClick={this.inspect}>inspect</a></li>
+                <li><a onClick={this.processes}>processes (top)</a></li>
+                <li><a onClick={this.statlog}>stats & logs</a></li>
+                <li><a onClick={this.changes}>changes (diff)</a></li>
+                <li className="divider"></li>
+                <li><a onClick={this.image}>image</a></li>
+              </ul>
+            </li>
+          </ul></td>
+          <td className="data-name">{command}</td>
+          <td className="data-name">{ports.substring(0, ports.length-1)}</td>
+          <td className="data-name image">{container.image}</td>
+          <td className="data-name">{status}</td>
+        </tr>
+      );
+    } else {
+      return (
         <tr key={key + props.endpoint} data-client-id={props.client.id} data-container-id={key}>
           <td className="data-index">{container.id.substring(0, 4)}</td>
           <td className="data-name"><ul className="nav">
@@ -305,7 +340,8 @@ var TableRow = React.createClass({
           <td className="data-name image">{container.image}</td>
           <td className="data-name">{status}</td>
         </tr>
-    );
+      );
+    }
   }
 });
 
@@ -332,12 +368,19 @@ var Table = React.createClass({
     var data = [];
     $.map(candidates, function (candidate) {
       if ((filters.client == -1) || (candidate.client.id == filters.client)) {
-        data.push({
-          client: candidate.client,
-          containers: candidate.containers
+        $.map(candidate.containers, function (container) {
+          data.push({client: candidate.client, container: container});
         });
       }
     });
+    data.sort(function (a, b) {
+      if (a.container.names.join(',') < b.container.names.join(','))
+        return -1;
+      if (a.container.names.join(',') > b.container.names.join(','))
+        return 1;
+      return 0;
+    });
+    $('#count').text(data.length + ' container' + ((data.length > 1) ? 's' : ''));
     return data;
   },
   componentDidMount: function() {
@@ -351,52 +394,39 @@ var Table = React.createClass({
     this.setState({data: this.filter()});
   },
   render: function() {
-    var multiple = (this.state.data.length > 1),
-        count = 0;
-    var rows = this.state.data.map(function(host, index) {
-      var client = host.client;
-      host.containers.sort(function (a, b) {
-        if (a.names.join(',') < b.names.join(','))
-          return -1;
-        if (a.names.join(',') > b.names.join(','))
-          return 1;
-        return 0;
-      });
+    var multiple = (this.state.data.length > 1);
 
-      return host.containers.map(function(container, conIndex) {
-        var key = container.id.substring(0, 10);
-        if (filters.text == '') {
-          count++;
-        } else {
-          var match = true;
-          $.map(filters.text.split(' '), function (word) {
-            var innerMath = (container.id.substring(0, 10).toUpperCase().indexOf(word) > -1);
-            $.map(container.names, function (name) {
-              innerMath |= (name.toUpperCase().indexOf(word) > -1);
-            });
-            innerMath |= (container.image.toUpperCase().indexOf(word) > -1);
-            innerMath |= (container.command && (container.command.toUpperCase().indexOf(word) > -1));
-            innerMath |= (container.status && (container.status.toUpperCase().indexOf(word) > -1));
-            if (container.ports) {
-              $.map(container.ports, function (port) {
-                innerMath |= (port.Type.toUpperCase().indexOf(word) > -1);
-                innerMath |= (port.IP.indexOf(word) > -1);
-                innerMath |= ((''+port.PrivatePort).indexOf(word) > -1);
-                innerMath |= ((''+port.PublicPort).indexOf(word) > -1);
-              });
-            }
-            match &= innerMath;
+    var rows = this.state.data.map(function(record, index) {
+      var client = record.client,
+          container = record.container,
+          key = record.container.id.substring(0, 10);
+
+      if (filters.text != '') {
+        var match = true;
+        $.map(filters.text.split(' '), function (word) {
+          var innerMath = (container.id.substring(0, 10).toUpperCase().indexOf(word) > -1);
+          $.map(container.names, function (name) {
+            innerMath |= (name.toUpperCase().indexOf(word) > -1);
           });
-          if (! match) return;
-          count++;
-        }
-        $('#count').text(count + ' container' + ((count > 1) ? 's' : ''));
-
-        return <TableRow key={key+'@'+client.id} index={key+'@'+index} content={{
-            endpoint: _endpoint(multiple, client.endpoint),
-            client: client, container: container
-        }} />
-      });
+          innerMath |= (container.image.toUpperCase().indexOf(word) > -1);
+          innerMath |= (container.command && (container.command.toUpperCase().indexOf(word) > -1));
+          innerMath |= (container.status && (container.status.toUpperCase().indexOf(word) > -1));
+          if (container.ports) {
+            $.map(container.ports, function (port) {
+              innerMath |= (port.Type.toUpperCase().indexOf(word) > -1);
+              innerMath |= (port.IP.indexOf(word) > -1);
+              innerMath |= ((''+port.PrivatePort).indexOf(word) > -1);
+              innerMath |= ((''+port.PublicPort).indexOf(word) > -1);
+            });
+          }
+          match &= innerMath;
+        });
+        if (! match) return;
+      }
+      return <TableRow key={key+'@'+client.id} index={key+'@'+index} content={{
+          endpoint: _endpoint(multiple, client.endpoint),
+          client: client, container: container
+      }} />
     });
     return (
         <table className="table table-striped table-hover">

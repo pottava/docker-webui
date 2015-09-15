@@ -3,7 +3,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -30,7 +29,10 @@ func init() {
 	http.Handle("/container/statlog/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Path[len("/container/statlog/"):]
 		client, _ := util.RequestGetParam(r, "client")
-		params := struct{ ID, Name, Client string }{id, _label(id, client, cfg.LabelOverrideNames), client}
+		params := struct {
+			ID, Name, Client string
+			ViewOnly         bool
+		}{id, _label(id, client, cfg.LabelOverrideNames), client, cfg.ViewOnly}
 		util.RenderHTML(w, []string{"containers/statlog.tmpl"}, params, nil)
 	}))
 	http.Handle("/container/changes/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
@@ -433,7 +435,6 @@ func _label(id, client, key string) string {
 			return id
 		}
 		for _, master := range masters {
-			log.Print(master.ID)
 			if master.ID == client {
 				engine.Configure(master.Endpoint, master.CertPath, master.IsDefault)
 				if c, err := engine.Docker(); err == nil {

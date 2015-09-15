@@ -6,6 +6,7 @@ import "time"
 type Config struct {
 	Name                   string `trim:"true"`
 	Port                   uint16
+	ViewOnly               bool
 	LogLevel               int
 	LabelOverrideNames     string `trim:"true"`
 	DockerEndpoints        []string

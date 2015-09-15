@@ -7,10 +7,12 @@ var stat_table = false,
     log_conf = {
       refresh: app.storage.get('refresh-window', 1),
       count: app.storage.get('monitoring-count', 20)
-    };
+    },
+    isViewOnly = false;
 
 $(document).ready(function () {
   $('#menu-containers').addClass('active');
+  isViewOnly = ($('#mode-view-only').val() == 'true');
 
   $('#actions>.btn-default').hover(function () {
     $(this).addClass($(this).attr('data-hover'));
@@ -36,6 +38,8 @@ $(document).ready(function () {
 });
 
 function _action(flag) {
+  if (isViewOnly) return;
+
   var id = $('#container-id').val(),
       action = '', msg = '';
   switch (flag) {

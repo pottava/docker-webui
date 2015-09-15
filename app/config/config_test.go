@@ -27,6 +27,7 @@ func TestMerge(t *testing.T) {
 	cfg := Config{
 		Name:     "Test",
 		Port:     8080,
+		ViewOnly: true,
 		LogLevel: 6,
 	}
 	actual := cfg.merge(defaultConfig())
@@ -34,6 +35,7 @@ func TestMerge(t *testing.T) {
 	expected := &Config{
 		Name:                   "Test",
 		Port:                   8080,
+		ViewOnly:               true,
 		LogLevel:               6,
 		DockerEndpoints:        []string{"unix:///var/run/docker.sock"},
 		DockerCertPath:         []string{""},
@@ -64,6 +66,7 @@ func TestComplete(t *testing.T) {
 		return
 	}
 	actual = *actual.merge(Config{
+		ViewOnly:           true,
 		LabelOverrideNames: "com.github.pottava.name",
 		DockerCertPath:     []string{"cert-path"},
 		StaticFileHost:     "cdn-host",

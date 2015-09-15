@@ -75,6 +75,7 @@ func Configure(endpoint, certPath string, def bool) {
 		IsActive:  true,
 		IsDefault: def,
 	}
+	current.ID = fmt.Sprint(models.Hash(endpoint))
 }
 
 // Save persists current configuration

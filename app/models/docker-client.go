@@ -52,7 +52,7 @@ func RemoveDockerClient(id string) bool {
 
 // RemoveDockerClientByEndpoint removes your specified configuration
 func RemoveDockerClientByEndpoint(endpoint string) {
-	RemoveDockerClient(fmt.Sprint(hash(endpoint)))
+	RemoveDockerClient(fmt.Sprint(Hash(endpoint)))
 }
 
 // Load select its configuration
@@ -71,8 +71,6 @@ func (c *DockerClient) Load() {
 
 // Save persists the client configuration
 func (c *DockerClient) Save() {
-	c.ID = fmt.Sprint(hash(c.Endpoint))
-
 	clients, _ := LoadDockerClients()
 	found := false
 	for _, client := range clients {
@@ -88,7 +86,8 @@ func (c *DockerClient) Save() {
 	misc.SaveAsFile(dockerClientSavePath, clients)
 }
 
-func hash(s string) uint32 {
+// Hash returns its hashed value
+func Hash(s string) uint32 {
 	h := fnv.New32a()
 	h.Write([]byte(s))
 	return h.Sum32()

@@ -4,9 +4,11 @@
 {{ define "content" }}
   <input id="client-id" type="hidden" value="{{ .Data.Client }}">
   <input id="container-id" type="hidden" value="{{ .Data.ID }}">
+  <input id="mode-view-only" type="hidden" value="{{ .Data.ViewOnly }}">
 
   <div style="position: relative;">
     <h2 style="margin: 25px 0 20px 0;">Statistics of {{ .Data.Name }}</h2>
+    {{if not .Data.ViewOnly}}
     <div style="position: absolute;top: 0;right: 10px;">
       <p id="actions" class="bs-component">
         <a href="#1" class="btn btn-default" data-hover="btn-primary">Restart</a>
@@ -14,6 +16,7 @@
         <a href="#3" class="btn btn-default" data-hover="btn-danger">Stop</a>
       </p>
     </div>
+    {{end}}
   </div>
   <div id="statistics" style="clear: both;"></div>
 
