@@ -42,7 +42,12 @@ func init() {
 		util.RenderHTML(w, []string{"containers/changes.tmpl"}, params, nil)
 	}))
 	http.Handle("/statistics", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		util.RenderHTML(w, []string{"containers/statistics.tmpl"}, nil, nil)
+		clients, err := models.LoadDockerClients()
+		if err != nil {
+			renderErrorJSON(w, err)
+			return
+		}
+		util.RenderHTML(w, []string{"containers/statistics.tmpl"}, struct{ Clients int }{len(clients)}, nil)
 	}))
 
 	/**

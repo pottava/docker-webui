@@ -4,11 +4,36 @@ var table = false,
       current: []
     },
     storedCPUs = [],
-    storedMems = [];
+    storedMems = [],
+    refreshWindow = app.storage.get('refresh-statistics', 2),
+    clients = 0;
 
 $(document).ready(function () {
   $('#menu-statistics').addClass('active');
+  clients = parseInt($('#number-of-clients').val(), 10);
+
+  setRefreshWindow(refreshWindow);
+  $('#refresh-window a').click(function(e) {
+    setRefreshWindow(parseInt($(this).attr('href').substring(1), 10));
+    app.func.stop(e);
+  });
+  refreshStats();
 });
+
+function setRefreshWindow(value) {
+  var a = $('#refresh-window a[href="#'+value+'"]'),
+      group = a.closest('.btn-group').removeClass('open');
+  refreshWindow = value;
+  app.storage.set('refresh-statistics', value);
+  group.find('.caption').text('refresh / '+a.text()).blur();
+}
+
+function refreshStats() {
+  if (refreshWindow && (refreshWindow > 0)) {
+    table && table.setProps();
+  }
+  setTimeout(refreshStats, Math.max(1, refreshWindow) * 1000);
+}
 
 var lineChartCPU = nv.models.lineChart()
               .x(function(d) { return d[0] })
@@ -30,7 +55,8 @@ lineChartMem.xAxis.tickFormat(function(d) {return d3.time.format('%X')(new Date(
 lineChartMem.yAxis.tickFormat(d3.format(',.1%'));
 nv.utils.windowResize(lineChartMem.update);
 
-var pieChartCPU = nv.models.pieChart()
+if (clients <= 1) {
+  var pieChartCPU = nv.models.pieChart()
               .x(function(d) { return d.label })
               .y(function(d) { return d.value })
               .color(d3.scale.category10().range())
@@ -41,7 +67,7 @@ var pieChartCPU = nv.models.pieChart()
               .donut(true)
               .donutRatio(0.35);
 
-var pieChartMem = nv.models.pieChart()
+  var pieChartMem = nv.models.pieChart()
               .x(function(d) { return d.label })
               .y(function(d) { return d.value })
               .color(d3.scale.category10().range())
@@ -51,6 +77,7 @@ var pieChartMem = nv.models.pieChart()
               .labelType("percent")
               .donut(true)
               .donutRatio(0.35);
+}
 
 function _setStoredData(arr, key, values) {
   var found = false;
@@ -129,37 +156,51 @@ var Table = React.createClass({
       }
       // update stats-table
       sender.setState({data: statistics});
-      setTimeout(function () {table.setProps();}, 1000);
+
+      var stats = [];
+      $.map(data, function (host) {
+        $.map(host.stats, function (record, key) {
+          stats.push({
+            client: host.client, key: key,
+            stat: record && record[0]
+          })
+        });
+      });
+      stats.sort(function (a, b) {
+        var an = a.key + a.client.endpoint,
+            bn = b.key + b.client.endpoint;
+        if (an < bn) return -1;
+        if (an > bn) return  1;
+        return 0;
+      });
 
       // change data format for charts
       var pie = {CPU: [], Mem: []}, multiple = (data.length > 1);
-      $.map(data, function (host, index) {
-        var client = host.client;
+      $.map(stats, function (record, index) {
+        var client = record.client,
+            name = record.key.substring(1).replace(',/', ', ') + _endpoint(multiple, client.endpoint),
+            stat = record.stat,
+            time = new Date(stat.read.substring(0, 19)+'Z').getTime(),
+            prev = _findPrivious(client.endpoint, record.key),
+            cpu_delta = 0, system_delta = 0, cpu_percent = 0, mem_percent = 0;
+        if (prev && (prev.length > 0)) {
+          prev = prev[0];
+        }
+        if (prev && stat && stat.cpu_stats) {
+          cpu_delta = stat.cpu_stats.cpu_usage.total_usage - prev.cpu_stats.cpu_usage.total_usage;
+          system_delta = stat.cpu_stats.system_cpu_usage - prev.cpu_stats.system_cpu_usage;
+        }
+        if ((system_delta > 0) && (cpu_delta > 0)) {
+          cpu_percent = 100.0 * cpu_delta / system_delta * stat.cpu_stats.cpu_usage.percpu_usage.length;
+        }
+        if (stat) mem_percent = stat.memory_stats.usage * 100 / stat.memory_stats.limit;
 
-        $.map(host.stats, function (record, key) {
-          var name = key.substring(1).replace(',/', ', ') + _endpoint(multiple, client.endpoint),
-              stat = record && record[0],
-              time = new Date(stat.read.substring(0, 19)+'Z').getTime(),
-              prev = _findPrivious(client.endpoint, key),
-              cpu_delta = 0, system_delta = 0, cpu_percent = 0, mem_percent = 0;
-          if (prev && (prev.length > 0)) {
-            prev = prev[0];
-          }
-          if (prev && stat && stat.cpu_stats) {
-            cpu_delta = stat.cpu_stats.cpu_usage.total_usage - prev.cpu_stats.cpu_usage.total_usage;
-            system_delta = stat.cpu_stats.system_cpu_usage - prev.cpu_stats.system_cpu_usage;
-          }
-          if ((system_delta > 0) && (cpu_delta > 0)) {
-            cpu_percent = 100.0 * cpu_delta / system_delta * stat.cpu_stats.cpu_usage.percpu_usage.length;
-          }
-          if (stat) mem_percent = stat.memory_stats.usage * 100 / stat.memory_stats.limit;
-
-          _setStoredData(storedCPUs, name, [time, cpu_percent]);
-          pie.CPU.push({label: name, value: cpu_percent});
-          _setStoredData(storedMems, name, [time, mem_percent]);
-          pie.Mem.push({label: name, value: mem_percent});
-        });
+        _setStoredData(storedCPUs, name, [time, cpu_percent]);
+        pie.CPU.push({label: name, value: cpu_percent});
+        _setStoredData(storedMems, name, [time, mem_percent]);
+        pie.Mem.push({label: name, value: mem_percent});
       });
+
       // draw line-charts
       nv.addGraph(function() {
         d3.select('#chart-cpu svg.line-charts').datum(storedCPUs).call(lineChartCPU);
@@ -170,13 +211,14 @@ var Table = React.createClass({
         });
         return lineChartCPU.yDomain([0, max]);
       });
-      var remain = 100;
-      $.map(pie.CPU, function (record) {
-        remain -= record.value;
-      });
-      pie.CPU.push({label: '-', value: remain});
-      d3.select("#chart-cpu svg.pie-charts").datum(pie.CPU).transition().duration(350).call(pieChartCPU);
-
+      if (clients <= 1) {
+        var remain = 100;
+        $.map(pie.CPU, function (record) {
+          remain -= record.value;
+        });
+        pie.CPU.push({label: '-', value: remain});
+        d3.select("#chart-cpu svg.pie-charts").datum(pie.CPU).transition().duration(350).call(pieChartCPU);
+      }
       nv.addGraph(function() {
         d3.select('#chart-mem svg.line-charts').datum(storedMems).call(lineChartMem);
         var max = d3.max(storedMems, function(d) {
@@ -184,12 +226,14 @@ var Table = React.createClass({
         });
         return lineChartMem.yDomain([0, max]);
       });
-      var remain = 100;
-      $.map(pie.Mem, function (record) {
-        remain -= record.value;
-      });
-      pie.Mem.push({label: '-', value: remain});
-      d3.select("#chart-mem svg.pie-charts").datum(pie.Mem).transition().duration(350).call(pieChartMem);
+      if (clients <= 1) {
+        var remain = 100;
+        $.map(pie.Mem, function (record) {
+          remain -= record.value;
+        });
+        pie.Mem.push({label: '-', value: remain});
+        d3.select("#chart-mem svg.pie-charts").datum(pie.Mem).transition().duration(350).call(pieChartMem);
+      }
     }});
   },
   componentDidMount: function() {

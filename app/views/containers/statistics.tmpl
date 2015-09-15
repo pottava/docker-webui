@@ -9,16 +9,41 @@
 <script type="text/jsx" src="{{ .StaticFileHost }}/assets/js/containers/statistics.jsx"></script>
 {{ end }}
 {{ define "content" }}
+  <input id="number-of-clients" type="hidden" value="{{ .Data.Clients }}">
 
-  <div id="chart-cpu" style="margin-top: 25px;clear: both;">
+  <div style="float: right;margin: 10px 0 -10px 0;">
+    <div class="btn-group">
+      <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+        <span class="caption">refresh / 2 sec</span>&nbsp;
+        <span class="caret"></span>
+      </a>
+      <ul id="refresh-window" class="dropdown-menu">
+        <li><a href="#0">stopped</a></li>
+        <li><a href="#2">2 sec</a></li>
+        <li><a href="#5">5 sec</a></li>
+        <li><a href="#10">10 sec</a></li>
+        <li><a href="#30">30 sec</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="chart-cpu" style="margin-top: 0px;clear: both;">
     <h4 style="margin: 0;">CPU</h4>
+    {{if gt .Data.Clients 1 }}
+    <svg class="line-charts" style="height: 270px;width: 95%;margin: 0 0 0 1%;float: left;"></svg>
+    {{else}}
     <svg class="pie-charts" style="height: 200px;width: 25%;margin: 0;float: left;"></svg>
     <svg class="line-charts" style="height: 200px;width: 70%;margin: 0;float: left;"></svg>
+    {{end}}
   </div>
   <div id="chart-mem" style="margin-top: -20px;clear: both;">
     <h4 style="margin-bottom: 0;">Memory</h4>
+    {{if gt .Data.Clients 1 }}
+    <svg class="line-charts" style="height: 270px;width: 95%;margin: 0 0 0 1%;float: left;"></svg>
+    {{else}}
     <svg class="pie-charts" style="height: 200px;width: 25%;margin: 0;float: left;"></svg>
     <svg class="line-charts" style="height: 200px;width: 70%;margin: 0;float: left;"></svg>
+    {{end}}
   </div>
 
   <div id="data" style="clear: both;"></div>
