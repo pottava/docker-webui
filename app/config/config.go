@@ -79,11 +79,11 @@ func environmentConfig() Config {
 	}
 }
 
-func toStringArray(value string) []string {
-	if misc.ZeroOrNil(value) {
+func toStringArray(values string) []string {
+	if misc.ZeroOrNil(values) {
 		return []string{}
 	}
-	return []string{value}
+	return strings.Split(values, ",")
 }
 
 func fileConfig() Config {

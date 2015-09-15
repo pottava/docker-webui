@@ -52,6 +52,7 @@ func init() {
 		if endpoint, found := util.RequestPostParam(r, "endpoint"); found {
 			cert, _ := util.RequestPostParam(r, "cert")
 			engine.Configure(endpoint, cert, false)
+			engine.Save()
 			_, err := engine.Docker()
 			if err != nil {
 				models.RemoveDockerClientByEndpoint(endpoint)

@@ -63,6 +63,7 @@ func init() {
 		} else {
 			Configure(endpoint, "", true)
 		}
+		Save()
 	}
 }
 
@@ -74,6 +75,10 @@ func Configure(endpoint, certPath string, def bool) {
 		IsActive:  true,
 		IsDefault: def,
 	}
+}
+
+// Save persists current configuration
+func Save() {
 	current.Save()
 }
 
