@@ -1,8 +1,9 @@
-var table;
+var table, isViewOnly = false;
 
 $(document).ready(function () {
   $('#menu-clients').addClass('active');
-  $('#client-detail pre').css({height: ($(window).height()-200)+'px'})
+  $('#client-detail pre').css({height: ($(window).height()-200)+'px'});
+  isViewOnly = ($('#mode-view-only').val() == 'true');
 
   $('#add-client').on('show.bs.modal', function (e) {
     $('#endpoint').val('');
@@ -18,6 +19,15 @@ $(document).ready(function () {
     }
     $('#add-client').modal('hide');
     _add(endpoint);
+  });
+
+  $('.container').bind('drop', function (e) {
+    _uploadFile(e.originalEvent.dataTransfer.files);
+    app.func.stop(e);
+  }).bind('dragenter', function (e) {
+    app.func.stop(e);
+  }).bind('dragover', function (e) {
+    app.func.stop(e);
   });
 });
 
@@ -48,6 +58,20 @@ function _find(arr, key, def) {
     }
   });
   return result;
+}
+
+function _uploadFile(files) {
+  var fd = new FormData();
+  for (var i = 0; i < files.length; i++) {
+    fd.append("files[]", files[i]);
+  }
+  $.ajax({
+    type: 'POST', url: '/clients/import', data: fd,
+    processData: false, contentType: false,
+    success: function (data) {
+      table.setProps();
+    }
+  });
 }
 
 var TableRow = React.createClass({
@@ -90,7 +114,7 @@ var TableRow = React.createClass({
           <td className="data-index">{_find(version, 'Version')}</td>
           <td className="data-index">{_find(version, 'ApiVersion')}</td>
           <td className="data-index">{client.isActive ? 'yes' : 'no'}</td>
-          {client.isDefault ? '' : function() {
+          {isViewOnly ? '' : function() {
             return (
               <td style={{width: 60+'px'}}>
                 <a className="btn btn-danger" onClick={rowclass.handleDelete}>&times;</a>

@@ -12,24 +12,27 @@ import (
 
 // DockerClient represents a Docker client
 type DockerClient struct {
-	ID        string `json:"id"`
-	Endpoint  string `json:"endpoint"`
-	CertPath  string `json:"certPath"`
-	IsActive  bool   `json:"isActive"`
-	IsDefault bool   `json:"isDefault"`
+	ID       string `json:"id"`
+	Endpoint string `json:"endpoint"`
+	CertPath string `json:"certPath"`
+	IsActive bool   `json:"isActive"`
 }
 
-var dockerClientSavePath string
+// DockerClientSavePath is the path to save clients
+var DockerClientSavePath string
 
 func init() {
 	r, _ := regexp.Compile("[^a-zA-Z0-9_\\.]")
 	name := r.ReplaceAllString(strings.ToLower(config.NewConfig().Name), "-")
-	dockerClientSavePath = "/tmp/" + name + "-docker-clients.json"
+	DockerClientSavePath = "/tmp/" + name + "-docker-clients.json"
 }
 
 // LoadDockerClients returns registered clients
 func LoadDockerClients() (clients []*DockerClient, err error) {
-	err = misc.ReadFromFile(dockerClientSavePath, &clients)
+	err = misc.ReadFromFile(DockerClientSavePath, &clients)
+	for _, client := range clients {
+		client.ID = fmt.Sprint(Hash(client.Endpoint))
+	}
 	return
 }
 
@@ -39,14 +42,11 @@ func RemoveDockerClient(id string) bool {
 	next := []*DockerClient{}
 	for _, client := range prev {
 		if client.ID == id {
-			if client.IsDefault {
-				return false
-			}
 			continue
 		}
 		next = append(next, client)
 	}
-	misc.SaveAsFile(dockerClientSavePath, next)
+	misc.SaveAsFile(DockerClientSavePath, next)
 	return true
 }
 
@@ -63,7 +63,6 @@ func (c *DockerClient) Load() {
 			c.ID = client.ID
 			c.CertPath = client.CertPath
 			c.IsActive = client.IsActive
-			c.IsDefault = client.IsDefault
 			break
 		}
 	}
@@ -83,7 +82,7 @@ func (c *DockerClient) Save() {
 	if !found {
 		clients = append(clients, c)
 	}
-	misc.SaveAsFile(dockerClientSavePath, clients)
+	misc.SaveAsFile(DockerClientSavePath, clients)
 }
 
 // Hash returns its hashed value

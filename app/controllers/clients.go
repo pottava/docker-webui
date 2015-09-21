@@ -1,9 +1,13 @@
 package controllers
 
 import (
+	"io"
+	"mime/multipart"
 	"net/http"
+	"os"
 
 	api "github.com/fsouza/go-dockerclient"
+	"github.com/pottava/docker-webui/app/config"
 	"github.com/pottava/docker-webui/app/engine"
 	util "github.com/pottava/docker-webui/app/http"
 	"github.com/pottava/docker-webui/app/misc"
@@ -17,9 +21,44 @@ type information struct {
 }
 
 func init() {
+	cfg := config.NewConfig()
 
 	http.Handle("/clients", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		util.RenderHTML(w, []string{"clients/index.tmpl"}, nil, nil)
+		params := struct{ ViewOnly bool }{cfg.ViewOnly}
+		util.RenderHTML(w, []string{"clients/index.tmpl"}, params, nil)
+	}))
+	http.Handle("/clients/export", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Disposition", "attachment; filename=docker-clients.json")
+		w.Header().Set("Content-Type", "application/force-download")
+		http.ServeFile(w, r, models.DockerClientSavePath)
+	}))
+	http.Handle("/clients/import", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+		var err error
+		if err = r.ParseMultipartForm(32 << 20); nil != err {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		for _, headers := range r.MultipartForm.File {
+			var in multipart.File
+			if in, err = headers[0].Open(); nil != err {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer in.Close()
+
+			var out *os.File
+			if out, err = os.Create(models.DockerClientSavePath); nil != err {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer out.Close()
+
+			if _, err = io.Copy(out, in); nil != err {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusOK)
 	}))
 
 	/**
@@ -33,7 +72,7 @@ func init() {
 			return
 		}
 		for _, client := range clients {
-			engine.Configure(client.Endpoint, client.CertPath, client.IsDefault)
+			engine.Configure(client.Endpoint, client.CertPath)
 			docker, err := engine.Docker()
 			if err != nil {
 				client.IsActive = false
@@ -51,7 +90,7 @@ func init() {
 	http.Handle("/api/client/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if endpoint, found := util.RequestPostParam(r, "endpoint"); found {
 			cert, _ := util.RequestPostParam(r, "cert")
-			engine.Configure(endpoint, cert, false)
+			engine.Configure(endpoint, cert)
 			engine.Save()
 			_, err := engine.Docker()
 			if err != nil {
@@ -93,7 +132,7 @@ func client(w http.ResponseWriter, id string) (client *engine.Client, ok bool) {
 	}
 	for _, master := range masters {
 		if master.ID == id {
-			engine.Configure(master.Endpoint, master.CertPath, master.IsDefault)
+			engine.Configure(master.Endpoint, master.CertPath)
 			client, err := engine.Docker()
 			if err == nil {
 				return client, true
@@ -111,7 +150,7 @@ func clients(w http.ResponseWriter) (clients []*engine.Client, ok bool) {
 		return nil, false
 	}
 	for _, master := range masters {
-		engine.Configure(master.Endpoint, master.CertPath, master.IsDefault)
+		engine.Configure(master.Endpoint, master.CertPath)
 		client, err := engine.Docker()
 		if err != nil {
 			continue

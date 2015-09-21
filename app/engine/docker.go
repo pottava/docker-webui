@@ -59,21 +59,20 @@ func init() {
 	}
 	for index, endpoint := range cfg.DockerEndpoints {
 		if len(cfg.DockerCertPath) > index {
-			Configure(endpoint, cfg.DockerCertPath[index], true)
+			Configure(endpoint, cfg.DockerCertPath[index])
 		} else {
-			Configure(endpoint, "", true)
+			Configure(endpoint, "")
 		}
 		Save()
 	}
 }
 
 // Configure set client's configuration to current
-func Configure(endpoint, certPath string, def bool) {
+func Configure(endpoint, certPath string) {
 	current = &models.DockerClient{
-		Endpoint:  endpoint,
-		CertPath:  certPath,
-		IsActive:  true,
-		IsDefault: def,
+		Endpoint: endpoint,
+		CertPath: certPath,
+		IsActive: true,
 	}
 	current.ID = fmt.Sprint(models.Hash(endpoint))
 }
