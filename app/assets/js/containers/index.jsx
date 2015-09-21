@@ -9,7 +9,7 @@ if (query != '') {
 
 $(document).ready(function () {
   $('#menu-containers').addClass('active');
-  $('#container-detail pre').css({height: ($(window).height()-200)+'px'})
+  $('#container-detail pre').css({height: ($(window).height()-200)+'px'});
   labelOverrideNames = $('#override-label-id').val();
   isViewOnly = ($('#mode-view-only').val() == 'true');
 
@@ -83,7 +83,7 @@ function _setClientOption() {
   if (count <= 1) {
     return;
   }
-  var html = '<li><a href="#-1">All</a></li>';
+  var html = '<li><a href="#-1">All Clients</a></li>';
   $.map(clients, function (value, key) {
     html += '<li><a href="#'+key+'">'+value+'</a></li>';
   });
@@ -394,7 +394,7 @@ var Table = React.createClass({
     this.setState({data: this.filter()});
   },
   render: function() {
-    var multiple = (this.state.data.length > 1);
+    var multiple = (candidates.length > 1) && (filters.client == -1);
 
     var rows = this.state.data.map(function(record, index) {
       var client = record.client,
@@ -424,7 +424,7 @@ var Table = React.createClass({
         if (! match) return;
       }
       return <TableRow key={key+'@'+client.id} index={key+'@'+index} content={{
-          endpoint: _endpoint(multiple, client.endpoint),
+          endpoint: multiple ? ' @'+client.endpoint.replace(/^.*:\/\//, '').replace(/:.*$/, ''): '',
           client: client, container: container
       }} />
     });
@@ -445,9 +445,5 @@ var Table = React.createClass({
     );
   }
 });
-
-function _endpoint(multiple, endpoint) {
-  return (multiple ? ' @'+endpoint.replace(/^.*:\/\//, '').replace(/:.*$/, '') : '');
-}
 
 table = React.render(<Table />, document.getElementById('data'));

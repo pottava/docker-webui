@@ -429,7 +429,7 @@ func init() {
 
 func _label(id, client, key string) string {
 	var docker *engine.Client
-	if misc.ZeroOrNil(id) {
+	if misc.ZeroOrNil(client) {
 		if c, err := engine.Docker(); err == nil {
 			docker = c
 		}
@@ -441,7 +441,7 @@ func _label(id, client, key string) string {
 		}
 		for _, master := range masters {
 			if master.ID == client {
-				engine.Configure(master.Endpoint, master.CertPath, master.IsDefault)
+				engine.Configure(master.Endpoint, master.CertPath)
 				if c, err := engine.Docker(); err == nil {
 					docker = c
 				}
