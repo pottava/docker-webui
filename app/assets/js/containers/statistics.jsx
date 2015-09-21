@@ -95,7 +95,7 @@ function _setStoredData(arr, key, values) {
 var TableRow = React.createClass({
   render: function() {
     var name = this.props.content.name,
-        stat = this.props.content.current && this.props.content.current[0],
+        stat = this.props.content.current && this.props.content.current,
         prev = this.props.content.previous && this.props.content.previous[0],
         cpu_delta = 0, system_delta = 0, cpu_percent = 0;
     if (prev && stat && stat.cpu_stats) {
@@ -135,7 +135,7 @@ var TableRow = React.createClass({
 
 var Table = React.createClass({
   getInitialState: function() {
-    return {data: {previous: [], current: []}};
+    return {data: {stats: [], multiple: false}};
   },
   load: function(sender) {
     var self = this;
@@ -154,8 +154,6 @@ var Table = React.createClass({
         statistics.previous = statistics.current;
         statistics.current = data;
       }
-      // update stats-table
-      sender.setState({data: statistics});
 
       var stats = [];
       $.map(data, function (host) {
@@ -173,6 +171,9 @@ var Table = React.createClass({
         if (an > bn) return  1;
         return 0;
       });
+
+      // update stats-table
+      sender.setState({data: {stats: stats, multiple: (data.length > 1)}});
 
       // change data format for charts
       var pie = {CPU: [], Mem: []}, multiple = (data.length > 1);
@@ -243,18 +244,17 @@ var Table = React.createClass({
     this.load(this);
   },
   render: function() {
-    var data = this.state.data, rows = [], multiple = (data.current.length > 1);
-    $.map(data.current, function (host, index) {
-      var client = host.client;
-
-      $.map(host.stats, function (current, key) {
-        var name = key + _endpoint(multiple, client.endpoint);
-        rows.push(<TableRow key={key+'@'+client.id} index={key+'@'+index} content={{
-          name: name,
-          previous: _findPrivious(client.endpoint, key),
-          current: current
-        }} />)
-      });
+    var multiple = this.state.data.multiple,
+        data = this.state.data.stats,
+        rows = [];
+    $.map(data, function (record, index) {
+      var client = record.client,
+          name = record.key + _endpoint(multiple, client.endpoint);
+      rows.push(<TableRow key={record.key+'@'+client.id} index={record.key+'@'+index} content={{
+        name: name,
+        current: record.stat,
+        previous: _findPrivious(client.endpoint, record.key)
+      }} />)
     });
     return (
         <table className="table table-striped table-hover">
