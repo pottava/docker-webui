@@ -71,19 +71,25 @@ func init() {
 			renderErrorJSON(w, err)
 			return
 		}
+		c := make(chan information, len(clients))
 		for _, client := range clients {
-			engine.Configure(client.Endpoint, client.CertPath)
-			docker, err := engine.Docker()
-			if err != nil {
-				client.IsActive = false
-				client.Save()
-				result = append(result, information{client, nil, nil})
-				continue
-			}
-			info, _ := docker.Info()
-			version, _ := docker.Version()
-			result = append(result, information{client, info, version})
+			go func(client *models.DockerClient) {
+				engine.Configure(client.Endpoint, client.CertPath)
+				docker, err := engine.Docker()
+				if err != nil {
+					client.IsActive = false
+					c <- information{client, nil, nil}
+					return
+				}
+				info, _ := docker.Info()
+				version, _ := docker.Version()
+				c <- information{client, info, version}
+			}(client)
 		}
+		for i := 0; i < len(clients); i++ {
+			result = append(result, <-c)
+		}
+		close(c)
 		util.RenderJSON(w, result, nil)
 	}))
 
