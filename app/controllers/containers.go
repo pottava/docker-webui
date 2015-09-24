@@ -97,13 +97,21 @@ func init() {
 	}))
 
 	http.Handle("/api/statistics", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		dockers, ok := clients(w)
-		if !ok {
-			return
+		var dockers []*engine.Client
+		if c, found := util.RequestGetParam(r, "client"); found {
+			if docker, ok := client(w, c); ok {
+				dockers = []*engine.Client{docker}
+			}
+		} else {
+			var ok bool
+			dockers, ok = clients(w)
+			if !ok {
+				return
+			}
 		}
 		type statistics struct {
-			Client *models.DockerClient    `json:"client"`
-			Stats  map[string][]*api.Stats `json:"stats"`
+			Client *models.DockerClient               `json:"client"`
+			Stats  map[string]map[string][]*api.Stats `json:"stats"`
 		}
 		stats := []statistics{}
 
@@ -117,7 +125,7 @@ func init() {
 				}
 				containers := models.SearchContainers(candidate, []string{})
 				c := make(chan models.DockerStats, len(containers))
-				inner := map[string][]*api.Stats{}
+				stats := map[string]map[string][]*api.Stats{}
 				count := util.RequestGetParamI(r, "count", 1)
 
 				for _, container := range containers {
@@ -131,6 +139,7 @@ func init() {
 							}
 						}
 						c <- models.DockerStats{
+							ID:    container.ID,
 							Name:  name,
 							Stats: stat,
 						}
@@ -138,12 +147,14 @@ func init() {
 				}
 				for i := 0; i < len(containers); i++ {
 					ds := <-c
+					inner := map[string][]*api.Stats{}
 					inner[ds.Name] = ds.Stats
+					stats[ds.ID] = inner
 				}
 				close(c)
 				d <- statistics{
 					Client: docker.Conf,
-					Stats:  inner,
+					Stats:  stats,
 				}
 			}(docker)
 		}

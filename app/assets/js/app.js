@@ -8,7 +8,8 @@ var app = {};
 		trim : _trim,
 		query : _query,
 		byteFormat: _byteFormat,
-		relativeTime: _relativeTime
+		relativeTime: _relativeTime,
+		hash : _hash
 	};
 	app.storage = {
 		set : _set,
@@ -18,7 +19,7 @@ var app = {};
 	function _ajax(arg) {
 		var dt = arg.dataType ? arg.dataType : 'json';
 		$.ajax({
-			url: arg.url, type: arg.type,
+			url: arg.url, type: arg.type ? arg.type : 'GET',
 			data: arg.data, dataType: dt,
 			success: function (data) {
 				arg.success && arg.success(data);
@@ -137,6 +138,16 @@ var app = {};
 			};
 			return storage;
 		})();
+	}
+	function _hash(str) {
+		var hash = 0;
+		if (str.length == 0) return hash;
+		for (var i = 0; i < str.length; i++) {
+			var char = str.charCodeAt(i);
+			hash = ((hash<<5)-hash)+char;
+			hash = hash & hash;
+		}
+		return hash;
 	}
 	function _set(key, value) {
 		try {ls.setItem(key, JSON.stringify(value));} catch (e) {}

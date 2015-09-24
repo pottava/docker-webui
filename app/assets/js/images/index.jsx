@@ -1,6 +1,6 @@
 
-var table, query = app.func.query('q'), clients = {}, candidates = [],
-    filters = {client: app.func.query('c', false), text: ''},
+var table, query = app.func.query('q'), clients = [], labels = [], candidates = [],
+    filters = {client: app.func.query('c', false), label: 0, text: ''},
     reload = false, isViewOnly = false;
 if (query != '') {
   filters.text = query.replace(/\s/g,' ').replace(/　/g,' ');
@@ -9,7 +9,7 @@ if (query != '') {
 
 $(document).ready(function () {
   $('#menu-images').addClass('active');
-  $('#image-detail pre').css({height: ($(window).height()-200)+'px'})
+  $('#image-detail pre').css({height: ($(window).height()-200)+'px'});
   isViewOnly = ($('#mode-view-only').val() == 'true');
 
   var search = $('#search-text').blur(_search);
@@ -77,9 +77,9 @@ function _setClientOption() {
       caption = false,
       count = 0;
   options.find('ul.dropdown-menu').html('');
-  $.map(clients, function (value, key) {
-    if (! filters.client) filters.client = key;
-    if ((! caption) && (filters.client == key)) caption = value;
+  $.map(clients, function (client) {
+    if (! filters.client) filters.client = client.key;
+    if ((! caption) && (filters.client == client.key)) caption = client.value;
     count++;
   });
   $('#pull-client-id').val(filters.client);
@@ -88,8 +88,8 @@ function _setClientOption() {
     return;
   }
   var html = '';
-  $.map(clients, function (value, key) {
-    html += '<li><a href="#'+key+'">'+value+'</a></li>';
+  $.map(clients, function (client) {
+    html += '<li><a href="#'+client.key+'">'+client.value+'</a></li>';
   });
   options.find('ul.dropdown-menu').html(html);
   options.fadeIn();
@@ -107,6 +107,48 @@ function _setClientOption() {
         group = a.closest('.btn-group').removeClass('open');
     group.find('.caption').text(a.text()).blur();
     $('#pull-client-id').val(a.attr('href').substring(1));
+    app.func.stop(e);
+  });
+}
+
+function _setLabelFilter() {
+  var options = $('.label-filters').hide(),
+      caption = false,
+      count = 0;
+  options.find('ul.dropdown-menu').html('');
+  $.map(labels, function (label) {
+    if ((! caption) && (filters.label == label.key)) caption = label.value;
+    count++;
+  });
+  if ((! caption) && (filters.label == -1)) caption = 'Not Labeled';
+  caption && options.find('.caption').text(caption);
+  if (count <= 1) {
+    return;
+  }
+  var html = '<li><a href="#0">All</a></li>',
+      group = '';
+  html += '<li><a href="#-1">Not Labeled</a></li>';
+  $.map(labels, function (label) {
+    if (group != label.key) {
+      html += '<li class="dropdown-header">'+label.key+'</li>';
+      group = label.key;
+    }
+    var value = label.value;
+    if (value.length > 20) {
+      value = value.substring(0, 20) + '..';
+    }
+    value = '&nbsp;&nbsp;&nbsp;&nbsp;'+value;
+    html += '<li><a href="#'+app.func.hash(label.key+'->'+label.value)+'">'+value+'</a></li>';
+  });
+  options.find('ul.dropdown-menu').html(html);
+  options.fadeIn();
+
+  $('#label-filter .dropdown-menu a').click(function(e) {
+    var a = $(this),
+        group = a.closest('.btn-group').removeClass('open');
+    group.find('.caption').text(a.text().trim()).blur();
+    filters.label = a.attr('href').substring(1);
+    table.setProps({reload: false});
     app.func.stop(e);
   });
 }
@@ -307,24 +349,67 @@ var Table = React.createClass({
     return {data: {client: '', images: []}};
   },
   load: function(sender) {
-    clients = {};
+    clients = [];
+    labels = [];
+
     app.func.ajax({type: 'GET', url: '/api/images', success: function (data) {
       candidates = data;
+
+      // make filters
+      var temp = {clients: {}, labels: {}};
       $.map(candidates, function (candidate) {
-        clients[''+candidate.client.id] = candidate.client.endpoint.replace(/^.*:\/\//, '').replace(/:.*$/, '');
+        temp.clients[''+candidate.client.id] = candidate.client.endpoint.replace(/^.*:\/\//, '').replace(/:.*$/, '');
+
+        $.map(candidate.images, function (image) {
+          if (! image.labels) return;
+          $.map(image.labels, function (value, key) {
+            temp.labels[key] = value;
+          });
+        });
+      });
+      $.map(temp.clients, function (value, key) {
+        clients.push({key: key, value, value});
+      });
+      $.map(temp.labels, function (value, key) {
+        labels.push({key: key, value, value});
+      });
+      clients.sort(function (a, b) {
+        if (a.value < b.value) return -1;
+        if (a.value > b.value) return 1;
+        return 0;
+      });
+      labels.sort(function (a, b) {
+        if (a.key < b.key) return -1;
+        if (a.key > b.key) return 1;
+        if (a.value < b.value) return -1;
+        if (a.value > b.value) return 1;
+        return 0;
       });
       _setClientOption();
+      _setLabelFilter();
+
+      // reflow
       sender.setState({data: sender.filter()});
     }});
   },
   filter: function() {
-    var data = {};
+    var data = {client: '', images: []};
     $.map(candidates, function (candidate) {
       if (candidate.client.id == filters.client) {
-        data = {
-          client: candidate.client,
-          images: candidate.images
-        };
+        data.client = candidate.client;
+
+        $.map(candidate.images, function (image) {
+          if ((filters.label == 0) || ((filters.label == -1) && (! image.labels))) {
+            data.images.push(image);
+          } else {
+            if (! image.labels) return;
+            var match = false;
+            $.map(image.labels, function (value, key) {
+              match |= (filters.label == app.func.hash(key+'->'+value));
+            });
+            if (match) data.images.push(image);
+          }
+        });
       }
     });
     return data;
@@ -348,11 +433,11 @@ var Table = React.createClass({
         if (filters.text != '') {
           var match = true;
           $.map(filters.text.split(' '), function (word) {
-            var innerMath = (image.id.substring(0, 10).toUpperCase().indexOf(word) > -1);
+            var innerMatch = (image.id.substring(0, 10).toUpperCase().indexOf(word) > -1);
             $.map(image.repoTags, function (tag) {
-              innerMath |= (tag.toUpperCase().indexOf(word) > -1);
+              innerMatch |= (tag.toUpperCase().indexOf(word) > -1);
             });
-            match &= innerMath;
+            match &= innerMatch;
           });
           if (! match) return;
         }

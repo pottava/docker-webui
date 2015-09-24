@@ -11,7 +11,23 @@
 {{ define "content" }}
   <input id="number-of-clients" type="hidden" value="{{ .Data.Clients }}">
 
-  <div style="float: right;margin: 10px 0 -10px 0;">
+  <div class="navbar-form navbar-left" role="search">
+    <div id="client-filter" class="client-filters btn-group" data-filter-key="client" style="display: none;">
+      <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+        <span class="caption">All</span>&nbsp;
+        <span class="caret"></span>
+      </a>
+      <ul class="dropdown-menu"></ul>
+    </div>
+    <div id="label-filter" class="label-filters btn-group" data-filter-key="label" style="display: none;">
+      <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+        <span class="caption">All</span>&nbsp;
+        <span class="caret"></span>
+      </a>
+      <ul class="dropdown-menu"></ul>
+    </div>
+  </div>
+  <div class="navbar-form navbar-right">
     <div class="btn-group">
       <a href="#" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
         <span class="caption">refresh / 2 sec</span>&nbsp;
@@ -29,21 +45,13 @@
 
   <div id="chart-cpu" style="margin-top: 0px;clear: both;">
     <h4 style="margin: 0;">CPU</h4>
-    {{if gt .Data.Clients 1 }}
-    <svg class="line-charts" style="height: 270px;width: 95%;margin: 0 0 0 1%;float: left;"></svg>
-    {{else}}
-    <svg class="pie-charts" style="height: 200px;width: 25%;margin: 0;float: left;"></svg>
-    <svg class="line-charts" style="height: 200px;width: 70%;margin: 0;float: left;"></svg>
-    {{end}}
+    <svg class="pie-charts" style="height: 200px;width: 25%;margin: 0;float: left;display: none;"></svg>
+    <svg class="line-charts" style="height: 200px;width: 95%;margin: 0;float: left;"></svg>
   </div>
   <div id="chart-mem" style="margin-top: -20px;clear: both;">
     <h4 style="margin-bottom: 0;">Memory</h4>
-    {{if gt .Data.Clients 1 }}
-    <svg class="line-charts" style="height: 270px;width: 95%;margin: 0 0 0 1%;float: left;"></svg>
-    {{else}}
-    <svg class="pie-charts" style="height: 200px;width: 25%;margin: 0;float: left;"></svg>
-    <svg class="line-charts" style="height: 200px;width: 70%;margin: 0;float: left;"></svg>
-    {{end}}
+    <svg class="pie-charts" style="height: 200px;width: 25%;margin: 0;float: left;display: none;"></svg>
+    <svg class="line-charts" style="height: 200px;width: 95%;margin: 0;float: left;"></svg>
   </div>
 
   <div id="data" style="clear: both;"></div>

@@ -29,6 +29,7 @@ type DockerContainers []DockerContainer
 
 // DockerStats represents a container's stats
 type DockerStats struct {
+	ID    string
 	Name  string
 	Stats []*docker.Stats
 }
