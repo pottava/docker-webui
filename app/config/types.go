@@ -9,6 +9,7 @@ type Config struct {
 	ViewOnly               bool
 	LogLevel               int
 	LabelOverrideNames     string `trim:"true"`
+	LabelFilters           []string
 	DockerEndpoints        []string
 	DockerCertPath         []string
 	DockerPullBeginTimeout time.Duration

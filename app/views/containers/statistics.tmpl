@@ -9,6 +9,7 @@
 <script type="text/jsx" src="{{ .StaticFileHost }}/assets/js/containers/statistics.jsx"></script>
 {{ end }}
 {{ define "content" }}
+  <input id="filter-label-ids" type="hidden" value="{{ .Data.LabelFilters }}">
   <input id="number-of-clients" type="hidden" value="{{ .Data.Clients }}">
 
   <div class="navbar-form navbar-left" role="search">

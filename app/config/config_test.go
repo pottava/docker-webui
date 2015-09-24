@@ -37,6 +37,7 @@ func TestMerge(t *testing.T) {
 		Port:                   8080,
 		ViewOnly:               true,
 		LogLevel:               6,
+		LabelFilters:           []string{"all"},
 		DockerEndpoints:        []string{"unix:///var/run/docker.sock"},
 		DockerCertPath:         []string{""},
 		DockerPullBeginTimeout: 3 * time.Minute,

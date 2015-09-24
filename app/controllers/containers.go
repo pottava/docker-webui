@@ -47,7 +47,11 @@ func init() {
 			renderErrorJSON(w, err)
 			return
 		}
-		util.RenderHTML(w, []string{"containers/statistics.tmpl"}, struct{ Clients int }{len(clients)}, nil)
+		params := struct {
+			LabelFilters string
+			Clients      int
+		}{strings.Join(cfg.LabelFilters, ","), len(clients)}
+		util.RenderHTML(w, []string{"containers/statistics.tmpl"}, params, nil)
 	}))
 
 	/**

@@ -1,6 +1,11 @@
 
 var table, query = app.func.query('q'), clients = [], labels = [], candidates = [], labelOverrideNames = '',
-    filters = {client: app.func.query('c', -1), status: app.storage.get('filters-status', 3), label: 0, text: ''},
+    filters = {
+      client: app.func.query('c', -1),
+      status: app.storage.get('filters-status', 3),
+      label: parseInt(app.func.query('l', '0'), 10),
+      text: ''
+    },
     isViewOnly = false;
 if (query != '') {
   filters.text = query.replace(/\s/g,' ').replace(/　/g,' ');
@@ -106,7 +111,9 @@ function _setLabelFilter() {
       count = 0;
   options.find('ul.dropdown-menu').html('');
   $.map(labels, function (label) {
-    if ((! caption) && (filters.label == label.key)) caption = label.value;
+    if ((! caption) && (filters.label == app.func.hash(label.key+'->'+label.value))) {
+      caption = label.value;
+    }
     count++;
   });
   if ((! caption) && (filters.label == -1)) caption = 'Not Labeled';
@@ -137,6 +144,11 @@ function _setLabelFilter() {
         group = a.closest('.btn-group').removeClass('open');
     group.find('.caption').text(a.text().trim()).blur();
     filters.label = a.attr('href').substring(1);
+
+    if (window.history && window.history.pushState) {
+      var url = (filters.label == 0) ? '/' : '/?l='+filters.label;
+      history.pushState(null, null, url);
+    }
     table.setProps({reload: false});
     app.func.stop(e);
   });
@@ -401,13 +413,15 @@ var Table = React.createClass({
       candidates = data;
 
       // make filters
-      var temp = {clients: {}, labels: {}};
+      var temp = {clients: {}, labels: {}},
+          conf = $('#filter-label-ids').val();
       $.map(candidates, function (candidate) {
         temp.clients[''+candidate.client.id] = candidate.client.endpoint.replace(/^.*:\/\//, '').replace(/:.*$/, '');
 
         $.map(candidate.containers, function (container) {
           if (! container.labels) return;
           $.map(container.labels, function (value, key) {
+            if ((conf != 'all') && (conf.indexOf(key) == -1)) return;
             if (! temp.labels[key]) {
               temp.labels[key] = {};
             }

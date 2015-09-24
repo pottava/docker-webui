@@ -2,7 +2,8 @@
 {{ define "css" }}<link rel="stylesheet" href="{{ .StaticFileHost }}/assets/css/app/index.css">{{ end }}
 {{ define "js" }}<script type="text/jsx" src="{{ .StaticFileHost }}/assets/js/containers/index.jsx"></script>{{ end }}
 {{ define "content" }}
-  <input id="override-label-id" type="hidden" value="{{ .Data.Label }}">
+  <input id="override-label-id" type="hidden" value="{{ .Data.LabelOverride }}">
+  <input id="filter-label-ids" type="hidden" value="{{ .Data.LabelFilters }}">
   <input id="mode-view-only" type="hidden" value="{{ .Data.ViewOnly }}">
 
   <div id="conditions" class="navbar-collapse">

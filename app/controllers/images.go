@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/pottava/docker-webui/app/config"
 	"github.com/pottava/docker-webui/app/engine"
@@ -13,7 +14,10 @@ func init() {
 	cfg := config.NewConfig()
 
 	http.Handle("/images", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		params := struct{ ViewOnly bool }{cfg.ViewOnly}
+		params := struct {
+			LabelFilters string
+			ViewOnly     bool
+		}{strings.Join(cfg.LabelFilters, ","), cfg.ViewOnly}
 		util.RenderHTML(w, []string{"images/index.tmpl"}, params, nil)
 	}))
 	http.Handle("/image/history/", util.Chain(func(w http.ResponseWriter, r *http.Request) {

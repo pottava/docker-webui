@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"strings"
 
 	"github.com/pottava/docker-webui/app/config"
 	_ "github.com/pottava/docker-webui/app/controllers"
@@ -33,9 +34,10 @@ func index(cfg *config.Config) http.Handler {
 			return
 		}
 		params := struct {
-			Label    string
-			ViewOnly bool
-		}{cfg.LabelOverrideNames, cfg.ViewOnly}
+			LabelOverride string
+			LabelFilters  string
+			ViewOnly      bool
+		}{cfg.LabelOverrideNames, strings.Join(cfg.LabelFilters, ","), cfg.ViewOnly}
 		misc.RenderHTML(w, []string{"containers/index.tmpl"}, params, nil)
 	})
 }

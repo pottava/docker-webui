@@ -147,7 +147,7 @@ var app = {};
 			hash = ((hash<<5)-hash)+char;
 			hash = hash & hash;
 		}
-		return hash;
+		return Math.abs(hash);
 	}
 	function _set(key, value) {
 		try {ls.setItem(key, JSON.stringify(value));} catch (e) {}

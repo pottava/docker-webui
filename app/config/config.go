@@ -22,6 +22,7 @@ func defaultConfig() Config {
 		ViewOnly:               false,
 		LogLevel:               4,
 		LabelOverrideNames:     "",
+		LabelFilters:           []string{"all"},
 		DockerEndpoints:        []string{"unix:///var/run/docker.sock"},
 		DockerCertPath:         []string{""},
 		DockerPullBeginTimeout: 3 * time.Minute,
@@ -63,6 +64,7 @@ func environmentConfig() Config {
 		ViewOnly:               misc.ParseBool(os.Getenv("APP_VIEW_ONLY")),
 		LogLevel:               misc.Atoi(os.Getenv("APP_LOG_LEVEL")),
 		LabelOverrideNames:     os.Getenv("APP_LABEL_OVERRIDE_NAMES"),
+		LabelFilters:           toStringArray(os.Getenv("APP_LABEL_FILTERS")),
 		DockerEndpoints:        toStringArray(os.Getenv("DOCKER_HOST")),
 		DockerCertPath:         toStringArray(os.Getenv("DOCKER_CERT_PATH")),
 		DockerPullBeginTimeout: misc.ParseDuration(os.Getenv("DOCKER_PULL_BEGIN_TIMEOUT")),
@@ -158,12 +160,13 @@ func (config *Config) trimWhitespace() {
 // String returns a string representation of the config.
 func (config *Config) String() string {
 	return fmt.Sprintf(
-		"Name: %v, Port: %v, ViewOnly: %v, LogLevel: %v, LabelOverrideNames: %v, DockerEndpoints: %v, DockerCertPath: %v, "+
+		"Name: %v, Port: %v, ViewOnly: %v, LogLevel: %v, "+
+			"LabelOverrideNames: %v, LabelFilters: %v, DockerEndpoints: %v, DockerCertPath: %v, "+
 			"DockerPullBeginTimeout: %v, DockerPullTimeout: %v, DockerStatTimeout: %v, DockerStartTimeout: %v, "+
 			"DockerStopTimeout: %v, DockerRestartTimeout: %v, DockerKillTimeout: %v, DockerRmTimeout: %v, "+
 			"DockerCommitTimeout: %v, StaticFileHost: %v, StaticFilePath: %v, PreventSelfStop: %v, "+
 			"HiddenContainers: %v",
-		config.Name, config.Port, config.ViewOnly, config.LogLevel, config.LabelOverrideNames,
+		config.Name, config.Port, config.ViewOnly, config.LogLevel, config.LabelOverrideNames, config.LabelFilters,
 		config.DockerEndpoints, config.DockerCertPath, config.DockerPullBeginTimeout,
 		config.DockerPullTimeout, config.DockerStatTimeout, config.DockerStartTimeout, config.DockerStopTimeout,
 		config.DockerRestartTimeout, config.DockerKillTimeout, config.DockerRmTimeout,
