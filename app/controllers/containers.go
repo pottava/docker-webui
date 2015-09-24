@@ -41,6 +41,10 @@ func init() {
 		params := struct{ ID, Name, Client string }{id, _label(id, client, cfg.LabelOverrideNames), client}
 		util.RenderHTML(w, []string{"containers/changes.tmpl"}, params, nil)
 	}))
+	http.Handle("/logs", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+		params := struct{ LabelFilters string }{strings.Join(cfg.LabelFilters, ",")}
+		util.RenderHTML(w, []string{"containers/logs.tmpl"}, params, nil)
+	}))
 	http.Handle("/statistics", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		clients, err := models.LoadDockerClients()
 		if err != nil {
@@ -93,8 +97,7 @@ func init() {
 			}(docker)
 		}
 		for i := 0; i < len(dockers); i++ {
-			containers := <-d
-			result = append(result, containers)
+			result = append(result, <-d)
 		}
 		close(d)
 		util.RenderJSON(w, result, nil)
@@ -163,11 +166,75 @@ func init() {
 			}(docker)
 		}
 		for i := 0; i < len(dockers); i++ {
-			inner := <-d
-			stats = append(stats, inner)
+			stats = append(stats, <-d)
 		}
 		close(d)
 		util.RenderJSON(w, stats, nil)
+	}))
+
+	http.Handle("/api/logs", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+		count := util.RequestGetParamI(r, "count", 100)
+		var dockers []*engine.Client
+		if c, found := util.RequestGetParam(r, "client"); found {
+			if docker, ok := client(w, c); ok {
+				dockers = []*engine.Client{docker}
+			}
+		} else {
+			var ok bool
+			dockers, ok = clients(w)
+			if !ok {
+				return
+			}
+		}
+		type stdlogs struct {
+			ID     string   `json:"id"`
+			Stdout []string `json:"stdout"`
+			Stderr []string `json:"stderr"`
+		}
+		type clientlogs struct {
+			Client *models.DockerClient `json:"client"`
+			Logs   []stdlogs            `json:"logs"`
+		}
+		logs := []clientlogs{}
+
+		d := make(chan clientlogs, len(dockers))
+		for _, docker := range dockers {
+			go func(docker *engine.Client) {
+				candidate, err := docker.ListContainers(models.ListContainerOption(3))
+				if err != nil {
+					renderErrorJSON(w, err)
+					return
+				}
+				containers := models.SearchContainers(candidate, []string{})
+
+				c := make(chan stdlogs, len(containers))
+				inner := []stdlogs{}
+				for _, container := range containers {
+					go func(container models.DockerContainer) {
+
+						stdout, stderr, err := docker.Logs(container.ID, count, 1*time.Second)
+						if err != nil {
+							renderErrorJSON(w, err)
+							return
+						}
+						c <- stdlogs{container.ID, stdout, stderr}
+					}(container)
+				}
+				for i := 0; i < len(containers); i++ {
+					inner = append(inner, <-c)
+				}
+				close(c)
+				d <- clientlogs{
+					Client: docker.Conf,
+					Logs:   inner,
+				}
+			}(docker)
+		}
+		for i := 0; i < len(dockers); i++ {
+			logs = append(logs, <-d)
+		}
+		close(d)
+		util.RenderJSON(w, logs, nil)
 	}))
 
 	/**

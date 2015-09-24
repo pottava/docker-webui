@@ -155,7 +155,7 @@ function _setLabelFilter() {
 }
 
 function setStatusFilter(value) {
-  var a = $('#conditions a[href="#'+value+'"]'),
+  var a = $('#status-filter a[href="#'+value+'"]'),
       group = a.closest('.btn-group').removeClass('open');
   group.find('.caption').text(a.text()).blur();
   app.storage.set('filters-status', value);

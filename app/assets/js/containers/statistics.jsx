@@ -357,7 +357,7 @@ var Table = React.createClass({
               client: host.client,
               id: id, key: key,
               stat: record && record[0]
-            })
+            });
           });
         });
       });

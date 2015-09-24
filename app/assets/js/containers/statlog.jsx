@@ -5,13 +5,13 @@ var stat_table = false,
     },
     log_table = false,
     log_conf = {
-      refresh: app.storage.get('refresh-window', 1),
-      count: app.storage.get('monitoring-count', 20)
+      refresh: app.storage.get('refresh-window-stat', 1),
+      count: app.storage.get('monitoring-count-stat', 20)
     },
     isViewOnly = false;
 
 $(document).ready(function () {
-  $('#menu-containers').addClass('active');
+  $('#menu-logs').addClass('active');
   isViewOnly = ($('#mode-view-only').val() == 'true');
 
   $('#actions>.btn-default').hover(function () {
@@ -58,14 +58,14 @@ function setRefreshWindow(value) {
   var a = $('#refresh-window a[href="#'+value+'"]'),
       group = a.closest('.btn-group').removeClass('open');
   log_conf.refresh = value;
-  app.storage.set('refresh-window', value);
+  app.storage.set('refresh-window-stat', value);
   group.find('.caption').text('refresh / '+a.text()).blur();
 }
 function setMonitoringCount(value) {
   var a = $('#monitoring-count a[href="#'+value+'"]'),
       group = a.closest('.btn-group').removeClass('open');
   log_conf.count = value;
-  app.storage.set('monitoring-count', value);
+  app.storage.set('monitoring-count-stat', value);
   group.find('.caption').text(a.text()).blur();
 }
 function refreshLogs() {
