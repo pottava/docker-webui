@@ -363,15 +363,20 @@ var Table = React.createClass({
         $.map(candidate.images, function (image) {
           if (! image.labels) return;
           $.map(image.labels, function (value, key) {
-            temp.labels[key] = value;
+            if (! temp.labels[key]) {
+              temp.labels[key] = {};
+            }
+            temp.labels[key][value] = true;
           });
         });
       });
       $.map(temp.clients, function (value, key) {
         clients.push({key: key, value, value});
       });
-      $.map(temp.labels, function (value, key) {
-        labels.push({key: key, value, value});
+      $.map(temp.labels, function (nest, key) {
+        $.map(nest, function (_, value) {
+          labels.push({key: key, value, value});
+        });
       });
       clients.sort(function (a, b) {
         if (a.value < b.value) return -1;
