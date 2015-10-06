@@ -137,6 +137,9 @@ func client(w http.ResponseWriter, id string) (client *engine.Client, ok bool) {
 		return nil, false
 	}
 	for _, master := range masters {
+		if !master.IsActive {
+			continue
+		}
 		if master.ID == id {
 			engine.Configure(master.Endpoint, master.CertPath)
 			client, err := engine.Docker()
@@ -156,6 +159,9 @@ func clients(w http.ResponseWriter) (clients []*engine.Client, ok bool) {
 		return nil, false
 	}
 	for _, master := range masters {
+		if !master.IsActive {
+			continue
+		}
 		engine.Configure(master.Endpoint, master.CertPath)
 		client, err := engine.Docker()
 		if err != nil {
