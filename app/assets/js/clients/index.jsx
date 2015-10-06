@@ -87,7 +87,6 @@ var TableRow = React.createClass({
       popup.find('.details').text(JSON.stringify(data, true, ' '));
       popup.modal('show');
     }});
-    return false;
   },
   handleDelete: function() {
     var tr = $(this.getDOMNode()).closest('tr'),
@@ -96,7 +95,6 @@ var TableRow = React.createClass({
     if (window.confirm('Are you sure to remove the client?\nEndpoint: '+endpoint)) {
       _remove(id);
     }
-    return false;
   },
   render: function() {
     var rowclass = this,

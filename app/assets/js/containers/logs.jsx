@@ -186,7 +186,7 @@ var TableRow = React.createClass({
         <td className="data-name no-wrap">{log.time}</td>
         <td className="data-name"><a onClick={this.statlog}>{log.id.substring(0, 4)}</a></td>
         <td className="data-name">{log.type}</td>
-        <td className="data-name">{log.log}</td>
+        <td className="data-name data-force-break">{log.log}</td>
       </tr>
     );
   }
@@ -258,7 +258,7 @@ var Table = React.createClass({
       });
     });
     data.sort(function (a, b) {
-      var diff = new Date(b.key.substring(0, 19)+'Z') - new Date(a.key.substring(0, 19)+'Z');
+      var diff = new Date(a.key.substring(0, 19)+'Z') - new Date(b.key.substring(0, 19)+'Z');
       if (diff != 0) return diff;
       return parseInt(a.key.substring(20), 10) - parseInt(b.key.substring(20), 10);
     })

@@ -15,6 +15,9 @@
 .labels {
   color: silver;
 }
+.data-force-break {
+  word-break: break-all;
+}
 
 #count {
   float: right;
