@@ -14,7 +14,7 @@ import (
 	"github.com/pottava/docker-webui/app/models"
 )
 
-type information struct {
+type cInformation struct {
 	Client  *models.DockerClient `json:"client,omitempty"`
 	Info    *api.Env             `json:"info"`
 	Version *api.Env             `json:"version"`
@@ -65,29 +65,33 @@ func init() {
 	 * Docker client's API
 	 */
 	http.Handle("/api/clients", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		result := []information{}
+		result := []cInformation{}
 		clients, err := models.LoadDockerClients()
 		if err != nil {
 			renderErrorJSON(w, err)
 			return
 		}
-		c := make(chan information, len(clients))
+		c := make(chan cInformation, len(clients))
 		for _, client := range clients {
 			go func(client *models.DockerClient) {
 				engine.Configure(client.Endpoint, client.CertPath)
+				client.IsActive = true
+
 				docker, err := engine.Docker()
 				if err != nil {
 					client.IsActive = false
-					c <- information{client, nil, nil}
+					c <- cInformation{client, nil, nil}
 					return
 				}
 				info, _ := docker.Info()
 				version, _ := docker.Version()
-				c <- information{client, info, version}
+				c <- cInformation{client, info, version}
 			}(client)
 		}
 		for i := 0; i < len(clients); i++ {
-			result = append(result, <-c)
+			info := <-c
+			info.Client.Save()
+			result = append(result, info)
 		}
 		close(c)
 		util.RenderJSON(w, result, nil)
@@ -119,7 +123,7 @@ func init() {
 		}
 		info, _ := docker.Info()
 		version, _ := docker.Version()
-		util.RenderJSON(w, information{nil, info, version}, nil)
+		util.RenderJSON(w, cInformation{nil, info, version}, nil)
 	}))
 }
 
@@ -143,6 +147,10 @@ func client(w http.ResponseWriter, id string) (client *engine.Client, ok bool) {
 		if master.ID == id {
 			engine.Configure(master.Endpoint, master.CertPath)
 			client, err := engine.Docker()
+			if err != nil {
+				master.IsActive = false
+				master.Save()
+			}
 			if err == nil {
 				return client, true
 			}
@@ -165,6 +173,8 @@ func clients(w http.ResponseWriter) (clients []*engine.Client, ok bool) {
 		engine.Configure(master.Endpoint, master.CertPath)
 		client, err := engine.Docker()
 		if err != nil {
+			master.IsActive = false
+			master.Save()
 			continue
 		}
 		clients = append(clients, client)
