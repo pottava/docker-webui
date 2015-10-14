@@ -36,7 +36,7 @@ $(document).ready(function () {
   });
   $('#container-name .act-rename').click(function (e) {
     var popup = $('#container-name'),
-        name = popup.find('.title').text(),
+        name = popup.find('.container-name').val(),
         client = popup.find('.client-id').val(),
         newname = app.func.trim(popup.find('input.new-name').val());
     if (newname.length == 0) {
@@ -53,7 +53,7 @@ $(document).ready(function () {
   });
   $('#container-commit .act-commit').click(function (e) {
     var popup = $('#container-commit'),
-        name = popup.find('.title').text(),
+        name = popup.find('.container-name').val(),
         client = popup.find('.client-id').val(),
         repository = popup.find('.repository').val(),
         tag = popup.find('.tag').val(),
@@ -284,6 +284,7 @@ var TableRow = React.createClass({
         popup = $('#container-name');
     popup.find('.title').text(caption);
     popup.find('input').val(name);
+    popup.find('.container-name').val(name);
     popup.find('.client-id').val(tr.attr('data-client-id'));
     popup.modal('show');
   },
@@ -297,6 +298,7 @@ var TableRow = React.createClass({
     popup.find('.title').text(name);
     popup.find('.repository').val(((index == 0) ? repo : repo.substring(0, index)));
     popup.find('.tag').val(((index == 0) ? '' : repo.substring(index + 1)));
+    popup.find('.container-name').val(name);
     popup.find('.client-id').val(tr.attr('data-client-id'));
     popup.modal('show');
   },
