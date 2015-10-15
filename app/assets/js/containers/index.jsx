@@ -432,11 +432,11 @@ var Table = React.createClass({
         });
       });
       $.map(temp.clients, function (value, key) {
-        clients.push({key: key, value, value});
+        clients.push({key: key, value: value});
       });
       $.map(temp.labels, function (nest, key) {
         $.map(nest, function (_, value) {
-          labels.push({key: key, value, value});
+          labels.push({key: key, value: value});
         });
       });
       clients.sort(function (a, b) {
