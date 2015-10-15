@@ -176,7 +176,7 @@ var LogTableRow = React.createClass({
         <tr>
           <td className="data-name no-wrap">{log.time}</td>
           <td className="data-name">{log.type}</td>
-          <td className="data-name">{log.log}</td>
+          <td className="data-name">{log.log.replace(/\[[0-9]+m/g, '')}</td>
         </tr>
     );
   }

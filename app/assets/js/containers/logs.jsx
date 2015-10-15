@@ -186,7 +186,7 @@ var TableRow = React.createClass({
         <td className="data-name no-wrap">{log.time}</td>
         <td className="data-name"><a onClick={this.statlog}>{log.id.substring(0, 4)}</a></td>
         <td className="data-name">{log.type}</td>
-        <td className="data-name data-force-break">{log.log}</td>
+        <td className="data-name data-force-break">{log.log.replace(/\[[0-9]+m/g, '')}</td>
       </tr>
     );
   }
