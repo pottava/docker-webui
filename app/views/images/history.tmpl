@@ -1,6 +1,6 @@
 {{ define "title" }}image history | {{ .AppName }}{{ end }}
 {{ define "css" }}<link rel="stylesheet" href="{{ .StaticFileHost }}/assets/css/app/index.css">{{ end }}
-{{ define "js" }}<script type="text/jsx" src="{{ .StaticFileHost }}/assets/js/images/history.jsx"></script>{{ end }}
+{{ define "js" }}<script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/min/images/history.js"></script>{{ end }}
 {{ define "content" }}
   <input id="client-id" type="hidden" value="{{ .Data.Client }}">
   <input id="image-id" type="hidden" value="{{ .Data.ID }}">

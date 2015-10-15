@@ -1,0 +1,36 @@
+{
+  "name": "docker-webui",
+  "version": "0.1.0",
+  "description": "A web user-interface for docker",
+  "main": "app.js",
+  "scripts": {
+    "test": "go test github.com/pottava/docker-webui/..."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pottava/docker-webui.git"
+  },
+  "keywords": [
+    "docker",
+    "api"
+  ],
+  "author": "pottava",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pottava/docker-webui/issues"
+  },
+  "homepage": "https://github.com/pottava/docker-webui#readme",
+  "devDependencies": {
+    "browserify": "^11.2.0",
+    "gulp": "^3.9.0",
+    "gulp-autoprefixer": "^3.0.2",
+    "gulp-duration": "0.0.0",
+    "gulp-plumber": "^1.0.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-sass": "^2.0.4",
+    "gulp-uglify": "^1.4.2",
+    "reactify": "^1.1.1",
+    "through2": "^2.0.0",
+    "vinyl-buffer": "^1.0.0"
+  }
+}

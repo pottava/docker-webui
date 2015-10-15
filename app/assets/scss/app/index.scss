@@ -1,0 +1,63 @@
+
+#data-detail {
+  top: 50px;
+
+  .modal-header {
+    padding-bottom: 0;
+  }
+  hr {
+    margin-top: 15px;
+    margin-bottom: 5px;
+  }
+}
+.data-index a, .data-name a, .detail-refresh a {
+  cursor: pointer;
+}
+.labels {
+  color: silver;
+}
+.data-force-break {
+  word-break: break-all;
+}
+
+#count {
+  float: right;
+  margin: 37px 0 0 0;
+  color: silver;
+}
+
+#data .nav {
+  > li > a {
+    padding: 0;
+  }
+  .open>a, .open>a:focus, .open>a:hover,
+  >li>a:focus, >li>a:hover {
+    background-color: transparent;
+  }
+}
+
+.modal hr {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+.modal-header {
+  padding: 15px 15px 0 15px;
+}
+.detail-refresh {
+  width: 100%;
+
+  a {
+    float: right;
+  }
+}
+pre.well {
+  clear: both;
+  margin: 25px 0 0 0;
+}
+
+.item-caption {
+  margin: 12px 0 5px 0;
+}
+.no-wrap {
+  white-space: nowrap;
+}

@@ -6,7 +6,7 @@
 {{ define "js" }}
 <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/d3.min.js"></script>
 <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/nv.d3.min.js"></script>
-<script type="text/jsx" src="{{ .StaticFileHost }}/assets/js/containers/statistics.jsx"></script>
+<script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/min/containers/statistics.js"></script>
 {{ end }}
 {{ define "content" }}
   <input id="filter-label-ids" type="hidden" value="{{ .Data.LabelFilters }}">

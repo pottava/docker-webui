@@ -1,6 +1,6 @@
 {{ define "title" }}images | {{ .AppName }}{{ end }}
 {{ define "css" }}<link rel="stylesheet" href="{{ .StaticFileHost }}/assets/css/app/index.css">{{ end }}
-{{ define "js" }}<script type="text/jsx" src="{{ .StaticFileHost }}/assets/js/images/index.jsx"></script>{{ end }}
+{{ define "js" }}<script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/min/images/index.js"></script>{{ end }}
 {{ define "content" }}
   <input id="filter-label-ids" type="hidden" value="{{ .Data.LabelFilters }}">
   <input id="mode-view-only" type="hidden" value="{{ .Data.ViewOnly }}">
