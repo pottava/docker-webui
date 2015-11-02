@@ -1,0 +1,13 @@
+ap:
+  build: .
+  entrypoint: go
+  command: run /go/src/github.com/pottava/docker-webui/main.go
+  ports:
+    - "80:9000"
+  volumes:
+    - ".:/go/src/github.com/pottava/docker-webui/"
+    - "${DOCKER_CERT_PATH}:/etc/docker-compose/cert"
+  environment:
+    - DOCKER_HOST
+    - DOCKER_CERT_PATH=/etc/docker-compose/cert
+    - CONFIG_FILE_PATH=/go/src/github.com/pottava/docker-webui/config.json
