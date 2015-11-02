@@ -67,7 +67,25 @@ A web user-interface for [docker](https://www.docker.com/).
 
 ### 1. Run the application
 
-as a docker container
+as a docker-compose service
+
+```
+monit:
+  image: pottava/docker-webui
+  ports:
+    - "9000:9000"
+  volumes:
+    - "${DOCKER_CERT_PATH}:/etc/docker-compose/cert"
+  environment:
+    - DOCKER_HOST
+    - DOCKER_CERT_PATH=/etc/docker-compose/cert
+    - APP_LABEL_OVERRIDE_NAMES=com.docker.compose.service
+    - APP_LABEL_FILTERS=com.docker.compose.service
+    - APP_HIDDEN_CONTAINERS=monit
+    - APP_LOG_LEVEL=99
+```
+
+or as a simple docker container
 
 `$ docker run -d -p 9000:9000 -v /var/run/docker.sock:/var/run/docker.sock pottava/docker-webui`
 
