@@ -81,8 +81,6 @@ monit:
     - DOCKER_CERT_PATH=/etc/docker-compose/cert
     - APP_LABEL_OVERRIDE_NAMES=com.docker.compose.service
     - APP_LABEL_FILTERS=com.docker.compose.service
-    - APP_HIDDEN_CONTAINERS=monit
-    - APP_LOG_LEVEL=99
 ```
 
 or as a simple docker container
