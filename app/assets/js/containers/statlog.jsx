@@ -99,10 +99,10 @@ var StatTableRow = React.createClass({
         percent: stat.memory_stats.usage * 100 / stat.memory_stats.limit
       };
       network = {
-        in: app.func.byteFormat(stat.network.rx_bytes),
-        out: app.func.byteFormat(stat.network.tx_bytes),
-        inPacket: stat.network.rx_packets,
-        outPacket: stat.network.tx_packets
+        in: app.func.byteFormat(stat.networks.eth0.rx_bytes),
+        out: app.func.byteFormat(stat.networks.eth0.tx_bytes),
+        inPacket: stat.networks.eth0.rx_packets,
+        outPacket: stat.networks.eth0.tx_packets
       };
     }
     return (
