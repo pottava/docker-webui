@@ -1,4 +1,4 @@
-var table, isViewOnly = false;
+var isViewOnly = false;
 
 $(document).ready(function () {
   $('#menu-clients').addClass('active');
@@ -34,7 +34,7 @@ $(document).ready(function () {
 function _add(endpoint) {
   var arg = {endpoint: endpoint, cert: ''};
   app.func.ajax({type: 'POST', url:'/api/client/', data: arg, dataType: 'html', success: function (data) {
-    table.setProps();
+    ReactDOM.render(<Table />, document.getElementById('data'));
   }, error: function (xhr, status, err) {
     var message = (xhr && xhr.responseText) ? xhr.responseText : err;
     alert(message);
@@ -43,7 +43,7 @@ function _add(endpoint) {
 
 function _remove(id) {
   app.func.ajax({type: 'DELETE', url:'/api/client/'+id, dataType: 'html', success: function (data) {
-    table.setProps();
+    ReactDOM.render(<Table />, document.getElementById('data'));
   }});
 }
 
@@ -69,14 +69,14 @@ function _uploadFile(files) {
     type: 'POST', url: '/clients/import', data: fd,
     processData: false, contentType: false,
     success: function (data) {
-      table.setProps();
+      ReactDOM.render(<Table />, document.getElementById('data'));
     }
   });
 }
 
 var TableRow = React.createClass({
   handleDetail: function() {
-    var tr = $(this.getDOMNode()).closest('tr'),
+    var tr = $(ReactDOM.findDOMNode(this)).closest('tr'),
         id = tr.attr('data-client-id'),
         endpoint = tr.find('.endpoint').text(),
         cert = tr.find('.cert').text(),
@@ -89,7 +89,7 @@ var TableRow = React.createClass({
     }});
   },
   handleDelete: function() {
-    var tr = $(this.getDOMNode()).closest('tr'),
+    var tr = $(ReactDOM.findDOMNode(this)).closest('tr'),
         id = tr.attr('data-client-id'),
         endpoint = tr.find('.endpoint').text();
     if (window.confirm('Are you sure to remove the client?\nEndpoint: '+endpoint)) {
@@ -102,9 +102,9 @@ var TableRow = React.createClass({
         info = this.props.content.info,
         version = this.props.content.version;
     return (
-        <tr key={this.props.index} data-client-id={client.id}>
+        <tr data-client-id={client.id}>
           <td className="data-index endpoint">
-            <a href="#" onClick={rowclass.handleDetail} style={{outline: 'none', textDecoration: 'none'}}>{client.endpoint}</a>
+            <a onClick={rowclass.handleDetail} style={{outline: 'none', textDecoration: 'none'}}>{client.endpoint}</a>
           </td>
           <td className="data-index">{_find(info, 'Containers')}</td>
           <td className="data-index cert" style={{display: 'none'}}>{client.certPath}</td>
@@ -145,7 +145,7 @@ var Table = React.createClass({
   },
   render: function() {
     var rows = this.state.data.map(function(record, index) {
-      return <TableRow index={index} content={record} />
+      return <TableRow key={index} content={record} />
     });
     return (
         <table className="table table-striped table-hover">
@@ -166,4 +166,4 @@ var Table = React.createClass({
   }
 });
 
-table = React.render(<Table />, document.getElementById('data'));
+ReactDOM.render(<Table />, document.getElementById('data'));

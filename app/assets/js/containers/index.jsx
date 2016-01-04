@@ -1,5 +1,5 @@
 
-var table, query = app.func.query('q'), clients = [], labels = [], candidates = [], labelOverrideNames = '',
+var query = app.func.query('q'), clients = [], labels = [], candidates = [], labelOverrideNames = '',
     filters = {
       client: app.func.query('c', -1),
       status: app.storage.get('filters-status', 3),
@@ -24,7 +24,7 @@ $(document).ready(function () {
   setStatusFilter(filters.status);
   $('#status-filter .dropdown-menu a').click(function(e) {
     setStatusFilter(parseInt($(this).attr('href').substring(1), 10));
-    table.setProps({reload: true});
+    ReactDOM.render(<Table reload={true} />, document.getElementById('data'));
     app.func.stop(e);
   });
   $('.detail-refresh a').click(function (e) {
@@ -100,7 +100,7 @@ function _setClientOption() {
         group = a.closest('.btn-group').removeClass('open');
     group.find('.caption').text(a.text()).blur();
     filters.client = a.attr('href').substring(1);
-    table.setProps({reload: false});
+    ReactDOM.render(<Table reload={false} />, document.getElementById('data'));
     app.func.stop(e);
   });
 }
@@ -149,7 +149,7 @@ function _setLabelFilter() {
       var url = (filters.label == 0) ? '/' : '/?l='+filters.label;
       history.pushState(null, null, url);
     }
-    table.setProps({reload: false});
+    ReactDOM.render(<Table reload={false} />, document.getElementById('data'));
     app.func.stop(e);
   });
 }
@@ -167,7 +167,7 @@ function _search() {
   candidate = candidate.replace(/^\s+|\s+$/gm,'').toUpperCase();
   if (filters.text == candidate) return;
   filters.text = candidate;
-  table.setProps({reload: false});
+  ReactDOM.render(<Table reload={false} />, document.getElementById('data'));
 }
 
 var last = {};
@@ -198,7 +198,7 @@ function _rename(client, id, newname) {
       alert(data);
       return;
     }
-    table.setProps({reload: true});
+    ReactDOM.render(<Table reload={true} />, document.getElementById('data'));
   }});
 }
 
@@ -218,37 +218,37 @@ function _client(multiple, single) {
 
 var TableRow = React.createClass({
   inspect: function() {
-    var tr = $(this.getDOMNode()),
+    var tr = $(ReactDOM.findDOMNode(this)),
         id = tr.attr('data-container-id'),
         nm = '['+id.substring(0, 4)+'] '+tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
         client = _client('?client='+tr.attr('data-client-id'), '');
     _detail({title: nm, url: '/api/container/inspect/'+id+client});
   },
   processes: function() {
-    var tr = $(this.getDOMNode()),
+    var tr = $(ReactDOM.findDOMNode(this)),
         name = tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
         client = _client('?client='+tr.attr('data-client-id'), '');
     app.func.link('/container/top/'+name+client);
   },
   statlog: function() {
-    var tr = $(this.getDOMNode()),
+    var tr = $(ReactDOM.findDOMNode(this)),
         name = tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
         client = _client('?client='+tr.attr('data-client-id'), '');
     app.func.link('/container/statlog/'+name+client);
   },
   changes: function() {
-    var tr = $(this.getDOMNode()),
+    var tr = $(ReactDOM.findDOMNode(this)),
         name = tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
         client = _client('?client='+tr.attr('data-client-id'), '');
     app.func.link('/container/changes/'+name+client);
   },
   _action: function (sender, arg) {
-    var tr = $(this.getDOMNode()),
+    var tr = $(ReactDOM.findDOMNode(this)),
         name = tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
         client = _client({client: tr.attr('data-client-id')}, '');
     var success = arg.success ? arg.success : function (data) {
       var message = data.error ? data.error : (arg.msg ? arg.msg : arg.action + 'ed') + ' successfully.';
-      table.setProps({reload: true});
+      ReactDOM.render(<Table reload={true} />, document.getElementById('data'));
       alert(message);
     };
     if (arg.confirm && !window.confirm(arg.confirm + name)) {
@@ -278,7 +278,7 @@ var TableRow = React.createClass({
   },
   rename: function() {
     if (isViewOnly) return;
-    var tr = $(this.getDOMNode()),
+    var tr = $(ReactDOM.findDOMNode(this)),
         caption = tr.find('.dropdown a.dropdown-toggle').text(),
         name = tr.find('.dropdown a.dropdown-toggle').attr('data-container-name'),
         popup = $('#container-name');
@@ -290,7 +290,7 @@ var TableRow = React.createClass({
   },
   commit: function() {
     if (isViewOnly) return;
-    var tr = $(this.getDOMNode()),
+    var tr = $(ReactDOM.findDOMNode(this)),
         name = tr.find('.dropdown a.dropdown-toggle').text(),
         repo = tr.find('.image').text(),
         popup = $('#container-commit'),
@@ -303,7 +303,7 @@ var TableRow = React.createClass({
     popup.modal('show');
   },
   image: function() {
-    var tr = $(this.getDOMNode()),
+    var tr = $(ReactDOM.findDOMNode(this)),
         image = tr.find('.image').text(),
         client = _client('&c='+tr.attr('data-client-id'), '');
     app.func.link('/images?q='+image+client);
@@ -400,6 +400,9 @@ var TableRow = React.createClass({
 });
 
 var Table = React.createClass({
+  propTypes: {
+    reload: React.PropTypes.bool.isRequired,
+  },
   getInitialState: function() {
     return {data: []};
   },
@@ -489,8 +492,8 @@ var Table = React.createClass({
   componentDidMount: function() {
     this.load(this);
   },
-  componentWillReceiveProps: function(arg) {
-    if (arg.reload) {
+  componentWillReceiveProps: function(props) {
+    if (props.reload) {
       this.load(this);
       return;
     }
@@ -549,4 +552,4 @@ var Table = React.createClass({
   }
 });
 
-table = React.render(<Table />, document.getElementById('data'));
+ReactDOM.render(<Table reload={false} />, document.getElementById('data'));

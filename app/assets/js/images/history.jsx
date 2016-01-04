@@ -6,7 +6,7 @@ var TableRow = React.createClass({
   render: function() {
     var history = this.props.content;
     return (
-        <tr key={this.props.index}>
+        <tr>
           <td className="data-index">{history.Id.substring(0, 5)}</td>
           <td className="data-name no-wrap">{history.Tags}</td>
           <td className="data-name no-wrap">{history.Size && app.func.byteFormat(history.Size)}</td>
@@ -32,7 +32,7 @@ var Table = React.createClass({
   },
   render: function() {
     var rows = this.state.data.map(function(record, index) {
-      return <TableRow key={record.name} index={index} content={record} />
+      return <TableRow key={index} content={record} />
     });
     return (
         <table className="table table-striped table-hover">
@@ -43,4 +43,4 @@ var Table = React.createClass({
   }
 });
 
-React.render(<Table />, document.getElementById('data'));
+ReactDOM.render(<Table />, document.getElementById('data'));

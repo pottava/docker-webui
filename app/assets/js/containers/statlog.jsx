@@ -1,9 +1,7 @@
-var stat_table = false,
-    statistics = {
+var statistics = {
       previous: [],
       current: []
     },
-    log_table = false,
     log_conf = {
       refresh: app.storage.get('refresh-window-stat', 1),
       count: app.storage.get('monitoring-count-stat', 20)
@@ -33,7 +31,9 @@ $(document).ready(function () {
     setMonitoringCount(parseInt($(this).attr('href').substring(1), 10));
     app.func.stop(e);
   });
-  setInterval(function () {stat_table && stat_table.setProps();}, 1000);
+  setInterval(function () {
+    ReactDOM.render(<StatTable />, document.getElementById('statistics'));
+  }, 1000);
   refreshLogs();
 });
 
@@ -69,8 +69,8 @@ function setMonitoringCount(value) {
   group.find('.caption').text(a.text()).blur();
 }
 function refreshLogs() {
-  if (log_table && (log_conf.refresh > 0)) {
-    log_table.setProps();
+  if (log_conf.refresh > 0) {
+    ReactDOM.render(<LogTable />, document.getElementById('logs'));
   }
   setTimeout(refreshLogs, Math.max(1, log_conf.refresh) * 1000);
 }
@@ -106,7 +106,7 @@ var StatTableRow = React.createClass({
       };
     }
     return (
-        <tr key={this.props.index}>
+        <tr>
           <td className="data-name">{time}</td>
           <td className="data-name">{(cpu_percent+'').substring(0, 4)}%</td>
           <td className="data-name">{mem.usage} / {mem.max} / {mem.limit}</td>
@@ -146,7 +146,7 @@ var StatTable = React.createClass({
   render: function() {
     var data = this.state.data, rows = [];
     $.map(data.current, function (current, index) {
-      rows.push(<StatTableRow index={index} content={{previous: data.previous[index], current: current}} />)
+      rows.push(<StatTableRow key={index} content={{previous: data.previous[index], current: current}} />)
     });
     return (
         <table className="table table-striped table-hover">
@@ -166,7 +166,7 @@ var StatTable = React.createClass({
   }
 });
 
-stat_table = React.render(<StatTable />, document.getElementById('statistics'));
+ReactDOM.render(<StatTable />, document.getElementById('statistics'));
 
 
 var LogTableRow = React.createClass({
@@ -232,7 +232,7 @@ var LogTable = React.createClass({
     var rows = [];
     this.state.data.map(function(record, index) {
       if (! record.log) return;
-      rows.push(<LogTableRow key={record.key} index={index} content={record} />)
+      rows.push(<LogTableRow key={index} content={record} />)
     });
     return (
         <table className="table table-striped table-hover">
@@ -249,4 +249,4 @@ var LogTable = React.createClass({
   }
 });
 
-log_table = React.render(<LogTable />, document.getElementById('logs'));
+ReactDOM.render(<LogTable />, document.getElementById('logs'));

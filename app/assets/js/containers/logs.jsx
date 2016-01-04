@@ -1,5 +1,4 @@
-var table = false,
-    filters = {
+var filters = {
       client: app.func.query('c', -1),
       label: parseInt(app.func.query('l', '0'), 10)
     },
@@ -87,7 +86,7 @@ function setMonitoringCount(value) {
 
 function refresh() {
   if (refreshWindow && (refreshWindow > 0)) {
-    table && table.setProps({reload: true});
+    ReactDOM.render(<Table reload={true} />, document.getElementById('data'));
   }
   setTimeout(refresh, Math.max(1, refreshWindow) * 1000);
 }
@@ -117,7 +116,7 @@ function _setClientOption(clients) {
         group = a.closest('.btn-group').removeClass('open');
     group.find('.caption').text(a.text()).blur();
     filters.client = a.attr('href').substring(1);
-    table && table.setProps({reload: false});
+    ReactDOM.render(<Table reload={false} />, document.getElementById('data'));
     app.func.stop(e);
   });
 }
@@ -161,7 +160,7 @@ function _setLabelFilter(labels) {
         group = a.closest('.btn-group').removeClass('open');
     group.find('.caption').text(a.text().trim()).blur();
     filters.label = a.attr('href').substring(1);
-    table && table.setProps({reload: false});
+    ReactDOM.render(<Table reload={false} />, document.getElementById('data'));
 
     if (window.history && window.history.pushState) {
       var url = (filters.label == 0) ? '/logs' : '/logs?l='+filters.label;
@@ -173,7 +172,7 @@ function _setLabelFilter(labels) {
 
 var TableRow = React.createClass({
   statlog: function() {
-    var tr = $(this.getDOMNode()),
+    var tr = $(ReactDOM.findDOMNode(this)),
         id = tr.attr('data-container-id'),
         client = '?client='+tr.attr('data-client-id');
     app.func.link('/container/statlog/'+id+client);
@@ -193,6 +192,9 @@ var TableRow = React.createClass({
 });
 
 var Table = React.createClass({
+  propTypes: {
+    reload: React.PropTypes.bool.isRequired,
+  },
   getInitialState: function() {
     return {data: []};
   },
@@ -268,8 +270,8 @@ var Table = React.createClass({
   componentDidMount: function() {
     this.load(this);
   },
-  componentWillReceiveProps: function(arg) {
-    if (arg.reload) {
+  componentWillReceiveProps: function(props) {
+    if (props.reload) {
       this.load(this);
       return;
     }
@@ -279,7 +281,7 @@ var Table = React.createClass({
     var rows = [];
     this.state.data.map(function(record, index) {
       if (! record.log) return;
-      rows.push(<TableRow key={record.client + record.id + record.key} index={index} content={record} />)
+      rows.push(<TableRow key={record.client + record.id + record.key} content={record} />)
     });
     return (
         <table className="table table-striped table-hover">
@@ -297,4 +299,4 @@ var Table = React.createClass({
   }
 });
 
-table = React.render(<Table />, document.getElementById('data'));
+ReactDOM.render(<Table reload={false} />, document.getElementById('data'));

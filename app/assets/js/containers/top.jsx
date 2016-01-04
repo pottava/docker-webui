@@ -64,4 +64,4 @@ var Table = React.createClass({
   }
 });
 
-React.render(<Table />, document.getElementById('data'));
+ReactDOM.render(<Table />, document.getElementById('data'));

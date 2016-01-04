@@ -1,5 +1,4 @@
-var table = false,
-    filters = {
+var filters = {
       client: app.func.query('c', -1),
       label: parseInt(app.func.query('l', '0'), 10)
     },
@@ -83,7 +82,7 @@ function setRefreshWindow(value) {
 
 function refreshStats() {
   if (refreshWindow && (refreshWindow > 0)) {
-    table && table.setProps();
+    ReactDOM.render(<Table />, document.getElementById('data'));
   }
   setTimeout(refreshStats, Math.max(1, refreshWindow) * 1000);
 }
@@ -493,4 +492,4 @@ function _findPrivious(endpoint, id, key) {
   return result;
 }
 
-table = React.render(<Table />, document.getElementById('data'));
+ReactDOM.render(<Table />, document.getElementById('data'));

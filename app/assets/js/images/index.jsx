@@ -1,5 +1,5 @@
 
-var table, query = app.func.query('q'), clients = [], labels = [], candidates = [],
+var query = app.func.query('q'), clients = [], labels = [], candidates = [],
     filters = {
       client: app.func.query('c', false),
       label: parseInt(app.func.query('l', '0'), 10),
@@ -25,7 +25,7 @@ $(document).ready(function () {
   });
 
   $('#image-detail').on('hide.bs.modal', function () {
-    if (reload) table.setProps({reload: true});
+    if (reload) ReactDOM.render(<Table reload={true} />, document.getElementById('data'));
   });
   $('#image-pull').on('show.bs.modal', function () {
     $('#image-name').val('');
@@ -103,7 +103,7 @@ function _setClientOption() {
         group = a.closest('.btn-group').removeClass('open');
     group.find('.caption').text(a.text()).blur();
     filters.client = a.attr('href').substring(1);
-    table.setProps({reload: false});
+    ReactDOM.render(<Table reload={false} />, document.getElementById('data'));
     app.func.stop(e);
   });
   $('#pull-client .dropdown-menu a').click(function(e) {
@@ -159,7 +159,7 @@ function _setLabelFilter() {
       var url = (filters.label == 0) ? '/images' : '/images?l='+filters.label;
       history.pushState(null, null, url);
     }
-    table.setProps({reload: false});
+    ReactDOM.render(<Table reload={false} />, document.getElementById('data'));
     app.func.stop(e);
   });
 }
@@ -169,7 +169,7 @@ function _search() {
   candidate = candidate.replace(/^\s+|\s+$/gm,'').toUpperCase();
   if (filters.text == candidate) return;
   filters.text = candidate;
-  table.setProps({reload: false});
+  ReactDOM.render(<Table reload={false} />, document.getElementById('data'));
 }
 
 var last = {};
@@ -225,7 +225,7 @@ function _tag(client, id, repository, tag) {
   if (client) data.client = client;
 
   app.func.ajax({type: 'POST', url: '/api/image/tag/'+id, data: data, success: function (data) {
-    table.setProps({reload: true});
+    ReactDOM.render(<Table reload={true} />, document.getElementById('data'));
   }});
 }
 
@@ -237,21 +237,21 @@ function _client(multiple, single) {
 
 var TableRow = React.createClass({
   inspect: function() {
-    var tr = $(this.getDOMNode()),
+    var tr = $(ReactDOM.findDOMNode(this)),
         id = tr.attr('data-image-id'),
         name = tr.attr('data-image-name'),
         client = _client({client: tr.attr('data-client-id')}, '');
     _detail({title: name, url: '/api/image/inspect/'+id, conditions: client});
   },
   history: function() {
-    var tr = $(this.getDOMNode()),
+    var tr = $(ReactDOM.findDOMNode(this)),
         name = tr.attr('data-image-name'),
         client = _client('?client='+tr.attr('data-client-id'), '');
     app.func.link('/image/history/' + name + client);
   },
   run: function() {
     if (isViewOnly) return;
-    var tr = $(this.getDOMNode()),
+    var tr = $(ReactDOM.findDOMNode(this)),
         id = tr.attr('data-image-id'),
         name = tr.attr('data-image-name'),
         popup = $('#image-run');
@@ -260,21 +260,21 @@ var TableRow = React.createClass({
     popup.modal('show');
   },
   containers: function() {
-    var tr = $(this.getDOMNode()),
+    var tr = $(ReactDOM.findDOMNode(this)),
         container = tr.attr('data-image-name'),
         client = _client('&c='+tr.attr('data-client-id'), '');
     app.func.link('/?q='+container+client);
   },
   pull: function() {
     if (isViewOnly) return;
-    var tr = $(this.getDOMNode()),
+    var tr = $(ReactDOM.findDOMNode(this)),
         name = tr.attr('data-image-name'),
         client = _client(tr.attr('data-client-id'), '');
     _pull(client, name);
   },
   rmi: function() {
     if (isViewOnly) return;
-    var tr = $(this.getDOMNode()),
+    var tr = $(ReactDOM.findDOMNode(this)),
         id = tr.attr('data-image-id'),
         name = tr.attr('data-image-name'),
         client = _client({client: tr.attr('data-client-id')}, '');
@@ -289,12 +289,12 @@ var TableRow = React.createClass({
         alert(data);
         return;
       }
-      table.setProps({reload: true});
+      ReactDOM.render(<Table reload={true} />, document.getElementById('data'));
     }});
   },
   tag: function() {
     if (isViewOnly) return;
-    var tr = $(this.getDOMNode()),
+    var tr = $(ReactDOM.findDOMNode(this)),
         id = tr.attr('data-image-id'),
         name = tr.attr('data-image-name'),
         client = _client(tr.attr('data-client-id'), ''),
@@ -356,6 +356,9 @@ var TableRow = React.createClass({
 });
 
 var Table = React.createClass({
+  propTypes: {
+    reload: React.PropTypes.bool.isRequired,
+  },
   getInitialState: function() {
     return {data: {client: '', images: []}};
   },
@@ -435,8 +438,8 @@ var Table = React.createClass({
   componentDidMount: function() {
     this.load(this);
   },
-  componentWillReceiveProps: function(arg) {
-    if (arg.reload) {
+  componentWillReceiveProps: function(props) {
+    if (props.reload) {
       this.load(this);
       return;
     }
@@ -496,4 +499,4 @@ var Table = React.createClass({
   }
 });
 
-table = React.render(<Table />, document.getElementById('data'));
+ReactDOM.render(<Table reload={false} />, document.getElementById('data'));
