@@ -6,7 +6,12 @@
 {{ define "js" }}
 <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/d3.min.js"></script>
 <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/nv.d3.min.js"></script>
+{{ if eq .Mode "production"}}
 <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/min/containers/statistics.js"></script>
+{{ else }}
+<script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/browser-5.8.23.min.js"></script>
+<script type="text/babel" src="{{ .StaticFileHost }}/assets/js/containers/statistics.jsx"></script>
+{{ end }}
 {{ end }}
 {{ define "content" }}
   <input id="filter-label-ids" type="hidden" value="{{ .Data.LabelFilters }}">

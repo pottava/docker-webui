@@ -1,6 +1,13 @@
 {{ define "title" }}clients | {{ .AppName }}{{ end }}
 {{ define "css" }}<link rel="stylesheet" href="{{ .StaticFileHost }}/assets/css/app/index.css">{{ end }}
-{{ define "js" }}<script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/min/clients/index.js"></script>{{ end }}
+{{ define "js" }}
+{{ if eq .Mode "production"}}
+<script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/min/clients/index.js"></script>
+{{ else }}
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
+<script type="text/babel" src="{{ .StaticFileHost }}/assets/js/clients/index.jsx"></script>
+{{ end }}
+{{ end }}
 {{ define "content" }}
   <input id="mode-view-only" type="hidden" value="{{ .Data.ViewOnly }}">
 

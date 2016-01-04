@@ -7,7 +7,7 @@
   <title>{{ template "title" . }}</title>
   <link rel="icon" type="image/png" href="{{ .StaticFileHost }}/assets/img/favicon.png">
   <link rel="apple-touch-icon" href="{{ .StaticFileHost }}/assets/img/apple-icon.png">
-  <link rel="stylesheet" href="{{ .StaticFileHost }}/assets/css/lib/bootstrap.min.css">
+  <link rel="stylesheet" href="{{ .StaticFileHost }}/assets/css/lib/bootstrap-3.3.6.min.css">
   <link rel="stylesheet" href="{{ .StaticFileHost }}/assets/css/main.css">
   {{ template "css" . }}
 <body>
@@ -41,8 +41,14 @@
   </div>
 
   <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/jquery-1.11.3.min.js"></script>
-  <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/bootstrap.min.js"></script>
-  <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/react-0.13.3.min.js"></script>
+  <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/bootstrap-3.3.6.min.js"></script>
+  {{ if eq .Mode "production"}}
+  <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/react-0.14.5.min.js"></script>
+  <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/react-dom-0.14.5.min.js"></script>
+  {{ else }}
+  <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/react-0.14.5.js"></script>
+  <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/react-dom-0.14.5.js"></script>
+  {{ end }}
   <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/app.js"></script>
   {{ template "js" . }}
 </body>

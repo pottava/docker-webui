@@ -8,6 +8,7 @@ type Config struct {
 	Port                   uint16
 	ViewOnly               bool
 	LogLevel               int
+	Mode                   string `trim:"true"`
 	LabelOverrideNames     string `trim:"true"`
 	LabelFilters           []string
 	DockerEndpoints        []string

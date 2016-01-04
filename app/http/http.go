@@ -119,8 +119,9 @@ func RenderHTML(w http.ResponseWriter, templatePath []string, data interface{}, 
 	if err := tmpl.Execute(w, struct {
 		AppName        string
 		StaticFileHost string
+		Mode           string
 		Data           interface{}
-	}{cfg.Name, cfg.StaticFileHost, data}); err != nil {
+	}{cfg.Name, cfg.StaticFileHost, cfg.Mode, data}); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		logs.Error.Printf("ERROR: @RenderHTML %s", err.Error())
 		return

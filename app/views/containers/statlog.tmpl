@@ -1,6 +1,13 @@
 {{ define "title" }}{{ .Data.ID }} statistics & logs | {{ .AppName }}{{ end }}
 {{ define "css" }}<link rel="stylesheet" href="{{ .StaticFileHost }}/assets/css/app/index.css">{{ end }}
-{{ define "js" }}<script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/min/containers/statlog.js"></script>{{ end }}
+{{ define "js" }}
+{{ if eq .Mode "production"}}
+<script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/min/containers/statlog.js"></script>
+{{ else }}
+<script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/browser-5.8.23.min.js"></script>
+<script type="text/babel" src="{{ .StaticFileHost }}/assets/js/containers/statlog.jsx"></script>
+{{ end }}
+{{ end }}
 {{ define "content" }}
   <input id="client-id" type="hidden" value="{{ .Data.Client }}">
   <input id="container-id" type="hidden" value="{{ .Data.ID }}">

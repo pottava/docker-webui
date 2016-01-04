@@ -4,7 +4,12 @@
 <link rel="stylesheet" href="{{ .StaticFileHost }}/assets/css/app/index.css">
 {{ end }}
 {{ define "js" }}
+{{ if eq .Mode "production"}}
 <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/min/containers/logs.js"></script>
+{{ else }}
+<script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/browser-5.8.23.min.js"></script>
+<script type="text/babel" src="{{ .StaticFileHost }}/assets/js/containers/logs.jsx"></script>
+{{ end }}
 {{ end }}
 {{ define "content" }}
   <input id="filter-label-ids" type="hidden" value="{{ .Data.LabelFilters }}">
