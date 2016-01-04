@@ -1,6 +1,9 @@
 {
-  "DockerEndpoints": [
-    "unix:///var/run/docker.sock"
+  "LabelOverrideNames": "com.github.pottava.application",
+  "LabelFilters": [
+    "com.github.pottava.application",
+    "com.github.pottava.license"
   ],
-  "LogLevel": 99
+  "HiddenContainers": [
+  ]
 }
