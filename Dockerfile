@@ -1,6 +1,6 @@
 # Dockerfile
 
-FROM golang:1.5.1
+FROM pottava/golang
 MAINTAINER @pottava
 
 LABEL com.github.pottava.application="docker-webui" \
