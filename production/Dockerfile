@@ -14,7 +14,14 @@ RUN apk --no-cache add --virtual build-dependencies go git \
       && mkdir -p /go/src /go/bin \
       && chmod -R 777 /go \
       && go get -u github.com/pottava/docker-webui \
-      && apk del build-dependencies
+      && apk del --purge build-dependencies \
+      && rm -rf /go/pkg \
+          /go/src/golang.org \
+          /go/src/github.com/fsouza \
+          /go/src/github.com/pottava/docker-webui/.git* \
+          /go/src/github.com/pottava/docker-webui/[^a]* \
+          /go/src/github.com/pottava/docker-webui/app/[^av]* \
+          /go/src/github.com/pottava/docker-webui/app/assets/scss
 
 VOLUME ["/var/run/docker.sock"]
 EXPOSE 9000
