@@ -1,9 +1,12 @@
-ap:
-  image: pottava/docker-webui:latest
-  ports:
-    - "80:9000"
-  volumes:
-    - "${DOCKER_CERT_PATH}:/etc/docker-compose/cert"
-  environment:
-    - DOCKER_HOST
-    - DOCKER_CERT_PATH=/etc/docker-compose/cert
+version: "2"
+
+services:
+  ap:
+    image: pottava/docker-webui:latest
+    ports:
+      - 80:9000
+    volumes:
+      - ${DOCKER_CERT_PATH}:/etc/docker-compose/cert
+    environment:
+      - DOCKER_HOST
+      - DOCKER_CERT_PATH=/etc/docker-compose/cert

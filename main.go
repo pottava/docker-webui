@@ -10,8 +10,12 @@ import (
 	_ "github.com/pottava/docker-webui/app/controllers"
 	misc "github.com/pottava/docker-webui/app/http"
 	"github.com/pottava/docker-webui/app/logs"
-	v "github.com/pottava/docker-webui/app/misc"
 	_ "github.com/pottava/docker-webui/app/models"
+)
+
+var (
+	buildVersion string
+	buildDate    string
 )
 
 func main() {
@@ -45,7 +49,11 @@ func alive(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 func version(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "version: %s", v.Version)
+	if len(buildVersion) > 0 && len(buildDate) > 0 {
+		fmt.Fprintf(w, "version: %s (built at %s)", buildVersion, buildDate)
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
 }
 func assets(cfg *config.Config) http.Handler {
 	fs := http.FileServer(http.Dir(path.Join(cfg.StaticFilePath, "assets")))

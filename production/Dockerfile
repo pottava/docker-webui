@@ -21,7 +21,10 @@ RUN apk --no-cache add --virtual build-dependencies go git \
           /go/src/github.com/pottava/docker-webui/.git* \
           /go/src/github.com/pottava/docker-webui/[^a]* \
           /go/src/github.com/pottava/docker-webui/app/[^av]* \
-          /go/src/github.com/pottava/docker-webui/app/assets/scss
+          /go/src/github.com/pottava/docker-webui/app/assets/scss \
+          /go/src/github.com/pottava/docker-webui/app/assets/js/clients \
+          /go/src/github.com/pottava/docker-webui/app/assets/js/containers \
+          /go/src/github.com/pottava/docker-webui/app/assets/js/images
 
 VOLUME ["/var/run/docker.sock"]
 EXPOSE 9000

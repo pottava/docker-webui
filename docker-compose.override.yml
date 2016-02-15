@@ -1,14 +1,19 @@
-ap:
-  build: .
-  entrypoint: go run /go/src/github.com/pottava/docker-webui/main.go
-  volumes:
-    - ".:/go/src/github.com/pottava/docker-webui/"
-    - /var/run/docker.sock:/var/run/docker.sock
-  environment:
-    - APP_MODE=development
-    - APP_LOG_LEVEL=99
-    - APP_VIEW_ONLY=false
-    - DOCKER_HOST=unix:///var/run/docker.sock
-    - DOCKER_CERT_PATH=
-    - CONFIG_FILE_PATH=/go/src/github.com/pottava/docker-webui/config.json
-  container_name: 'ap'
+version: "2"
+
+services:
+  ap:
+    image: pottava/godep:go1.5
+    command: go run /go/src/github.com/pottava/docker-webui/main.go
+    volumes:
+      - .:/go/src/github.com/pottava/docker-webui
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /go/src/github.com/pottava/docker-webui
+    environment:
+      - APP_MODE=development
+      - APP_LOG_LEVEL=99
+      - APP_VIEW_ONLY=false
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DOCKER_CERT_PATH=
+      - CONFIG_FILE_PATH=/go/src/github.com/pottava/docker-webui/config.json
+      - GO15VENDOREXPERIMENT=1
+    container_name: 'ap'

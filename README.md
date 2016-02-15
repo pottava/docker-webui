@@ -138,4 +138,4 @@ HiddenContainers       | APP_HIDDEN_CONTAINERS     | hide specified containers i
 
 ## Copyright and license
 
-Code and documentation copyright 2015 SUPINF Inc. Code released under the [MIT license](https://github.com/pottava/docker-webui/blob/master/LICENSE).
+Code released under the [MIT license](https://github.com/pottava/docker-webui/blob/master/LICENSE).
