@@ -47,7 +47,7 @@ func init() {
 	cfg = config.NewConfig()
 
 	if cfg.PreventSelfStop {
-		if candidate, err := misc.ShellExec([]string{"bash", "-c",
+		if candidate, err := misc.ShellExec([]string{"sh", "-c",
 			"cat /proc/self/cgroup | grep -o -e 'docker.*' | head -n 1"}); err == nil {
 			pattern := regexp.MustCompile(`^docker[^0-9a-zA-Z]*`)
 			candidate = pattern.ReplaceAllString(candidate, "")

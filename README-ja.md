@@ -84,8 +84,8 @@ monit:
 
 シンプルにDockerコンテナとしてなら
 
-`$ docker run -d -p 80:9000 -e DOCKER_HOST=unix:///var/run/docker.sock -v /var/run/docker.sock:/var/run/docker.sock pottava/docker-webui`  
-`$ docker run -d -p 80:9000 -e DOCKER_HOST -e DOCKER_CERT_PATH=/etc/docker-compose/cert -v $DOCKER_CERT_PATH:/etc/docker-compose/cert pottava/docker-webui`
+`$ docker run -p 9000:9000 -v /var/run/docker.sock:/var/run/docker.sock pottava/docker-webui`  
+`$ docker run -p 9000:9000 -e DOCKER_HOST -e DOCKER_CERT_PATH=/etc/docker-compose/cert -v $DOCKER_CERT_PATH:/etc/docker-compose/cert pottava/docker-webui`
 
 Go言語環境のある方はこちらでも
 
