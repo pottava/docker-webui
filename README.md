@@ -89,8 +89,8 @@ monit:
 
 or as a simple docker container
 
-`$ docker run -p 9000:9000 -v /var/run/docker.sock:/var/run/docker.sock pottava/docker-webui`  
-`$ docker run -p 9000:9000 -e DOCKER_HOST -e DOCKER_CERT_PATH=/etc/docker-compose/cert -v $DOCKER_CERT_PATH:/etc/docker-compose/cert pottava/docker-webui`
+`$ docker run -p 9000:9000 --rm -v /var/run/docker.sock:/var/run/docker.sock pottava/docker-webui`  
+`$ docker run -p 9000:9000 --rm -e DOCKER_HOST -e DOCKER_CERT_PATH=/etc/docker-compose/cert -v $DOCKER_CERT_PATH:/etc/docker-compose/cert pottava/docker-webui`
 
 or as a go binary
 

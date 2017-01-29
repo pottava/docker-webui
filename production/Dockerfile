@@ -2,11 +2,12 @@ FROM alpine:3.5
 
 LABEL com.github.pottava.application="docker-webui" \
       com.github.pottava.description="A web user-interface for docker." \
-      com.github.pottava.usage="docker run -d -p 80:9000 -e DOCKER_HOST=unix:///var/run/docker.sock  -v /var/run/docker.sock:/var/run/docker.sock pottava/docker-webui" \
+      com.github.pottava.usage="docker run --rm -p 80:9000 -v /var/run/docker.sock:/var/run/docker.sock pottava/docker-webui" \
       com.github.pottava.license="MIT"
 
-RUN apk add --no-cache ca-certificates
+ENV GOPATH=/go
 
+RUN apk add --no-cache ca-certificates
 RUN apk --no-cache add --virtual build-dependencies bash gcc musl-dev openssl go git \
 
     # Install go 1.8
@@ -21,7 +22,6 @@ RUN apk --no-cache add --virtual build-dependencies bash gcc musl-dev openssl go
     && cd /usr/local/go/src \
     && patch -p2 -i /no-pic.patch \
     && ./make.bash \
-    && export GOPATH=/go \
     && mkdir -p /go/src /go/bin \
     && chmod -R 777 /go \
 
