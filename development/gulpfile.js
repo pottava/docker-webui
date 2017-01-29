@@ -21,22 +21,22 @@ gulp.task("react", function() {
           }
       );
   });
-  gulp.src('./app/assets/js/**/*.jsx')
+  gulp.src('/monitor/app/assets/js/**/*.jsx')
       .pipe(browserified)
       .pipe(rename({extname: '.js'}))
       .pipe(uglify())
-      .pipe(gulp.dest("./app/assets/js/min"));
+      .pipe(gulp.dest("/monitor/app/assets/js/min"));
 });
 
 gulp.task("sass", function() {
-  gulp.src("./app/assets/scss/**/*.scss")
+  gulp.src("/monitor/app/assets/scss/**/*.scss")
       .pipe(plumber())
       .pipe(sass())
       .pipe(autoprefixer())
-      .pipe(gulp.dest("./app/assets/css"));
+      .pipe(gulp.dest("/monitor/app/assets/css"));
 });
 
 gulp.task("default", function() {
-    gulp.watch("./app/assets/js/**/*.jsx", ["react"]);
-    gulp.watch("./app/assets/scss/**/*.scss", ["sass"]);
+    gulp.watch("/monitor/app/assets/js/**/*.jsx", ["react"]);
+    gulp.watch("/monitor/app/assets/scss/**/*.scss", ["sass"]);
 });

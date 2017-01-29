@@ -1,0 +1,25 @@
+# docker-compose -f development/docker-compose-tools.yml run --rm npm-install
+
+npm-install:
+  build: ./npm
+  command: npm install
+  volumes:
+    - .:/app
+
+# docker-compose -f development/docker-compose-tools.yml run --rm go-dep
+
+go-dep:
+  image: pottava/dep:go1.8
+  command: ensure
+  volumes:
+    - $GOPATH/src/github.com/pottava/docker-webui:/go/src/github.com/pottava/docker-webui
+  working_dir: /go/src/github.com/pottava/docker-webui
+
+# BUILD_VERSION=v0.1.0 BUILD_DATE=`date +%FT%T%z` docker-compose -f development/docker-compose-tools.yml run --rm gox-build
+
+gox-build:
+  image: pottava/gox:go1.8
+  command: --osarch "linux/amd64 darwin/amd64 windows/amd64" -ldflags "-X main.buildVersion=$BUILD_VERSION -X main.buildDate=$BUILD_DATE" -output "dist/{{.OS}}_{{.Arch}}"
+  volumes:
+    - $GOPATH/src/github.com/pottava/docker-webui:/go/src/github.com/pottava/docker-webui
+  working_dir: /go/src/github.com/pottava/docker-webui

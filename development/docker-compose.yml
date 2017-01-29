@@ -1,0 +1,29 @@
+version: "3"
+
+services:
+  ap:
+    image: pottava/golang:1.8
+    command: go run /go/src/github.com/pottava/docker-webui/main.go
+    ports:
+      - 9000:9000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../:/go/src/github.com/pottava/docker-webui/
+    working_dir: /go/src/github.com/pottava/docker-webui
+    environment:
+      - APP_MODE=development
+      - APP_LOG_LEVEL=99
+      - APP_VIEW_ONLY=false
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DOCKER_CERT_PATH=
+      - CONFIG_FILE_PATH=/go/src/github.com/pottava/docker-webui/development/config.json
+    container_name: 'ap'
+
+  gulp:
+    image: pottava/gulp:3.9-docker
+    command: gulp
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/app
+      - $GOPATH/src/github.com/pottava/docker-webui:/monitor
+    container_name: gulp

@@ -16,7 +16,7 @@ import (
 
 type cInformation struct {
 	Client  *models.DockerClient `json:"client,omitempty"`
-	Info    *api.Env             `json:"info"`
+	Info    *api.DockerInfo      `json:"info"`
 	Version *api.Env             `json:"version"`
 }
 

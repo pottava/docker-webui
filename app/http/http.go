@@ -95,7 +95,7 @@ func RenderText(w http.ResponseWriter, data string, err error) {
 	if IsInvalid(w, err, "@RenderText") {
 		return
 	}
-	w.Header().Set("Content-Type", "text/plain")
+	w.Header().Set("Content-Type", "text/plain; charset=UTF-8")
 	w.Write([]byte(html.EscapeString(data)))
 }
 
@@ -126,7 +126,7 @@ func RenderHTML(w http.ResponseWriter, templatePath []string, data interface{}, 
 		logs.Error.Printf("ERROR: @RenderHTML %s", err.Error())
 		return
 	}
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 }
 
 // RenderJSON write data as a json
@@ -138,7 +138,7 @@ func RenderJSON(w http.ResponseWriter, data interface{}, err error) {
 	if IsInvalid(w, err, "@RenderJSON") {
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.Write(js)
 }
 

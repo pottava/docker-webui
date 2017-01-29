@@ -1,0 +1,102 @@
+{
+    "memo": "59a560b2e23357d49cabfdba8997f2fc174f788843e7aa591598a313a9251c8f",
+    "projects": [
+        {
+            "name": "github.com/Azure/go-ansiterm",
+            "branch": "master",
+            "revision": "fa152c58bc15761d0200cb75fe958b89a9d4888e",
+            "packages": [
+                ".",
+                "winterm"
+            ]
+        },
+        {
+            "name": "github.com/Microsoft/go-winio",
+            "version": "v0.3.7",
+            "revision": "24a3e3d3fc7451805e09d11e11e95d9a0a4f205e",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/Sirupsen/logrus",
+            "version": "v0.11.0",
+            "revision": "d26492970760ca5d33129d2d799e34be5c4782eb",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/docker/docker",
+            "version": "v1.13.0",
+            "revision": "49bf474f9ed7ce7143a59d1964ff7b7fd9b52178",
+            "packages": [
+                "api/types/swarm",
+                "opts",
+                "pkg/archive",
+                "pkg/fileutils",
+                "pkg/homedir",
+                "pkg/jsonmessage",
+                "pkg/stdcopy"
+            ]
+        },
+        {
+            "name": "github.com/docker/go-connections",
+            "version": "v0.2.1",
+            "revision": "990a1a1a70b0da4c4cb70e117971a4f0babfbf1a",
+            "packages": [
+                "nat"
+            ]
+        },
+        {
+            "name": "github.com/docker/go-units",
+            "version": "v0.3.1",
+            "revision": "f2d77a61e3c169b43402a0a1e84f06daf29b8190",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/fsouza/go-dockerclient",
+            "branch": "master",
+            "revision": "6823f17d2af49fda944c94e657cebf3b498bc2f8",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/hashicorp/go-cleanhttp",
+            "branch": "master",
+            "revision": "ad28ea4487f05916463e2423a55166280e8254b5",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/opencontainers/runc",
+            "version": "v0.1.1",
+            "revision": "baf6536d6259209c3edfa2b22237af82942d3dfa",
+            "packages": [
+                "libcontainer/system",
+                "libcontainer/user"
+            ]
+        },
+        {
+            "name": "golang.org/x/net",
+            "revision": "b6d7b1396ec874c3b00f6c84cd4301a17c56c8ed",
+            "packages": [
+                "context",
+                "context/ctxhttp"
+            ]
+        },
+        {
+            "name": "golang.org/x/sys",
+            "branch": "master",
+            "revision": "d75a52659825e75fff6158388dddc6a5b04f9ba5",
+            "packages": [
+                "unix",
+                "windows"
+            ]
+        }
+    ]
+}

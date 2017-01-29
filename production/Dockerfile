@@ -1,32 +1,48 @@
-# Dockerfile
-
-FROM alpine:3.3
-MAINTAINER @pottava
+FROM alpine:3.5
 
 LABEL com.github.pottava.application="docker-webui" \
       com.github.pottava.description="A web user-interface for docker." \
       com.github.pottava.usage="docker run -d -p 80:9000 -e DOCKER_HOST=unix:///var/run/docker.sock  -v /var/run/docker.sock:/var/run/docker.sock pottava/docker-webui" \
       com.github.pottava.license="MIT"
 
-ENV GOPATH=/go PATH=/go/bin:$PATH
+RUN apk add --no-cache ca-certificates
 
-RUN apk --no-cache add --virtual build-dependencies go git \
-      && mkdir -p /go/src /go/bin \
-      && chmod -R 777 /go \
-      && go get -u github.com/pottava/docker-webui \
-      && apk del --purge build-dependencies \
-      && rm -rf /go/pkg \
-          /go/src/golang.org \
-          /go/src/github.com/fsouza \
-          /go/src/github.com/pottava/docker-webui/.git* \
-          /go/src/github.com/pottava/docker-webui/[^a]* \
-          /go/src/github.com/pottava/docker-webui/app/[^av]* \
-          /go/src/github.com/pottava/docker-webui/app/assets/scss \
-          /go/src/github.com/pottava/docker-webui/app/assets/js/clients \
-          /go/src/github.com/pottava/docker-webui/app/assets/js/containers \
-          /go/src/github.com/pottava/docker-webui/app/assets/js/images
+RUN apk --no-cache add --virtual build-dependencies bash gcc musl-dev openssl go git \
+
+    # Install go 1.8
+    && GOLANG_VERSION=1.8rc3 \
+    && GOLANG_SRC_URL=https://golang.org/dl/go$GOLANG_VERSION.src.tar.gz \
+    && GOLANG_SRC_SHA256=38b1c1738f111f7bccdd372efca2aa98a7bad1ca2cb21767ba69f34ae007499c \
+    && export GOROOT_BOOTSTRAP="$(go env GOROOT)" \
+    && wget -q "$GOLANG_SRC_URL" -O golang.tar.gz \
+    && echo "$GOLANG_SRC_SHA256  golang.tar.gz" | sha256sum -c - \
+    && tar -C /usr/local -xzf golang.tar.gz \
+    && wget -q https://raw.githubusercontent.com/docker-library/golang/master/1.8/alpine/no-pic.patch \
+    && cd /usr/local/go/src \
+    && patch -p2 -i /no-pic.patch \
+    && ./make.bash \
+    && export GOPATH=/go \
+    && mkdir -p /go/src /go/bin \
+    && chmod -R 777 /go \
+
+    # Compile docker-webui 
+    && go get -u github.com/pottava/docker-webui \
+    && mv /go/bin/docker-webui /usr/bin \
+
+    # Clean up
+    && apk del --purge build-dependencies \
+    && rm -rf /usr/local/go /usr/lib/go /golang.tar.gz /*.patch /go/pkg /go/bin \
+        /go/src/golang.org \
+        /go/src/github.com/[^p]* \
+        /go/src/github.com/pottava/docker-webui/.git* \
+        /go/src/github.com/pottava/docker-webui/[^a]* \
+        /go/src/github.com/pottava/docker-webui/app/[^av]* \
+        /go/src/github.com/pottava/docker-webui/app/assets/scss \
+        /go/src/github.com/pottava/docker-webui/app/assets/js/clients \
+        /go/src/github.com/pottava/docker-webui/app/assets/js/containers \
+        /go/src/github.com/pottava/docker-webui/app/assets/js/images
 
 VOLUME ["/var/run/docker.sock"]
 EXPOSE 9000
 
-ENTRYPOINT ["/go/bin/docker-webui"]
+ENTRYPOINT ["docker-webui"]

@@ -1,4 +1,5 @@
 node_modules
-Godeps/Readme
 vendor/*
 dist/*
+docker-compose.override.yml
+*.log
