@@ -2,13 +2,14 @@ version: "3"
 
 services:
   ap:
-    image: pottava/golang:1.8
-    command: go run /go/src/github.com/pottava/docker-webui/main.go
+    image: pottava/realize:1.2
+    command: run
     ports:
       - 9000:9000
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ../:/go/src/github.com/pottava/docker-webui/
+      - ./:/go/src/github.com/pottava/docker-webui/.realize/
     working_dir: /go/src/github.com/pottava/docker-webui
     environment:
       - APP_MODE=development

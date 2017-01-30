@@ -39,7 +39,7 @@ func TestMerge(t *testing.T) {
 		LogLevel:               6,
 		LabelFilters:           []string{"all"},
 		DockerEndpoints:        []string{"unix:///var/run/docker.sock"},
-		DockerCertPath:         []string{""},
+		DockerCertPath:         []string{},
 		DockerPullBeginTimeout: 3 * time.Minute,
 		DockerPullTimeout:      2 * time.Hour,
 		DockerStatTimeout:      5 * time.Second,
@@ -67,6 +67,7 @@ func TestComplete(t *testing.T) {
 		return
 	}
 	actual = *actual.merge(Config{
+		Mode:               "test",
 		ViewOnly:           true,
 		LabelOverrideNames: "com.github.pottava.name",
 		DockerCertPath:     []string{"cert-path"},

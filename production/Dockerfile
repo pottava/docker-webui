@@ -30,7 +30,7 @@ RUN apk --no-cache add --virtual build-dependencies bash gcc musl-dev openssl go
     && mv /go/bin/docker-webui /usr/bin \
 
     # Clean up
-    && apk del --purge build-dependencies \
+    && apk del --purge -r build-dependencies \
     && rm -rf /usr/local/go /usr/lib/go /golang.tar.gz /*.patch /go/pkg /go/bin \
         /go/src/golang.org \
         /go/src/github.com/[^p]* \
