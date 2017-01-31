@@ -1,7 +1,7 @@
 version: "3"
 
 services:
-  ap:
+  app:
     image: pottava/realize:1.2
     command: run
     ports:
@@ -18,13 +18,13 @@ services:
       - DOCKER_HOST=unix:///var/run/docker.sock
       - DOCKER_CERT_PATH=
       - CONFIG_FILE_PATH=/go/src/github.com/pottava/docker-webui/development/config.json
-    container_name: 'ap'
+    container_name: app
 
   gulp:
-    image: pottava/gulp:3.9-docker
+    image: docker-webui/assets
+    build: ./assets
     command: gulp
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - .:/app
-      - $GOPATH/src/github.com/pottava/docker-webui:/monitor
+      - ../:/gulp/monitor/
     container_name: gulp

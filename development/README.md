@@ -6,13 +6,7 @@
 docker-compose -f development/docker-compose-tools.yml run --rm go-dep
 ```
 
-### 2. NPM install for the task runner
-
-```
-docker-compose -f development/docker-compose-tools.yml run --rm npm-install
-```
-
-### 3. docker-compose up
+### 2. docker-compose up
 
 ```
 cd development
