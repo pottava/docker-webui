@@ -5,13 +5,13 @@ $(document).ready(function () {
   $('#client-detail pre').css({height: ($(window).height()-200)+'px'});
   isViewOnly = ($('#mode-view-only').val() == 'true');
 
-  $('#add-client').on('show.bs.modal', function (e) {
+  $('#add-client').on('show.bs.modal', function () {
     $('#endpoint').val('');
   });
-  $('#add-client').on('shown.bs.modal', function (e) {
+  $('#add-client').on('shown.bs.modal', function () {
     $('#endpoint').focus();
   });
-  $('#add-client .act-add').click(function (e) {
+  $('#add-client .act-add').click(function () {
     var endpoint = app.func.trim($('#endpoint').val());
     if (endpoint.length == 0) {
       $('#endpoint').focus();
@@ -33,7 +33,7 @@ $(document).ready(function () {
 
 function _add(endpoint) {
   var arg = {endpoint: endpoint, cert: ''};
-  app.func.ajax({type: 'POST', url:'/api/client/', data: arg, dataType: 'html', success: function (data) {
+  app.func.ajax({type: 'POST', url:'/api/client/', data: arg, dataType: 'html', success: function () {
     ReactDOM.render(<Table />, document.getElementById('data'));
   }, error: function (xhr, status, err) {
     var message = (xhr && xhr.responseText) ? xhr.responseText : err;
@@ -42,7 +42,7 @@ function _add(endpoint) {
 }
 
 function _remove(id) {
-  app.func.ajax({type: 'DELETE', url:'/api/client/'+id, dataType: 'html', success: function (data) {
+  app.func.ajax({type: 'DELETE', url:'/api/client/'+id, dataType: 'html', success: function () {
     ReactDOM.render(<Table />, document.getElementById('data'));
   }});
 }
@@ -68,16 +68,18 @@ function _uploadFile(files) {
   $.ajax({
     type: 'POST', url: '/clients/import', data: fd,
     processData: false, contentType: false,
-    success: function (data) {
+    success: function () {
       ReactDOM.render(<Table />, document.getElementById('data'));
     }
   });
 }
 
 var TableRow = React.createClass({
+  propTypes: {
+    content: React.PropTypes.object.isRequired
+  },
   handleDetail: function() {
     var tr = $(ReactDOM.findDOMNode(this)).closest('tr'),
-        id = tr.attr('data-client-id'),
         endpoint = tr.find('.endpoint').text(),
         cert = tr.find('.cert').text(),
         client = {endpoint: endpoint, cert: cert},

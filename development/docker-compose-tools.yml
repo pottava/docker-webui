@@ -1,7 +1,7 @@
 # docker-compose -f development/docker-compose-tools.yml run --rm npm-install
 
 npm-install:
-  build: ./npm
+  build: ./assets
   command: npm install
   volumes:
     - .:/app

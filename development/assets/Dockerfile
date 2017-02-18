@@ -1,7 +1,7 @@
-FROM pottava/gulp:3.9-docker
+FROM supinf/gulp
 
-ADD . /gulp
-WORKDIR /gulp
+ADD gulpfile.js /gulp/gulpfile.js
+ADD eslint.json /gulp/eslint.json
 
-RUN apk add --no-cache make g++ python-dev \
-    && npm install
+VOLUME /monitor
+CMD ["gulp"]

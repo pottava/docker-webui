@@ -50,7 +50,7 @@ $(document).ready(function () {
   });
   $('#image-tag .act-tag').click(function (e) {
     var popup = $('#image-tag'),
-        client = popup.find('.client').val();
+        client = popup.find('.client').val(),
         id = popup.find('.image-id').val(),
         repository = popup.find('.repository').val(),
         tag = popup.find('.tag').val();
@@ -64,12 +64,12 @@ $(document).ready(function () {
     app.func.stop(e);
   });
 
-  $('#image-run .act-run').click(function (e) {
+  $('#image-run .act-run').click(function () {
     $('#image-run').modal('hide');
   });
 });
 
-$(window).keyup(function (e) {
+$(window).keyup(function () {
   var search = $('#search-text');
   if (search.is(':focus')) {
     _search();
@@ -201,7 +201,7 @@ function _detail(arg) {
     arg.callback && arg.callback();
     popup.modal('show');
     last = arg;
-  }, error: function (xhr, status, err) {
+  }, error: function () {
     arg.err && alert(arg.err)
   }});
 }
@@ -224,7 +224,7 @@ function _tag(client, id, repository, tag) {
   var data = {repo: repository, tag: tag};
   if (client) data.client = client;
 
-  app.func.ajax({type: 'POST', url: '/api/image/tag/'+id, data: data, success: function (data) {
+  app.func.ajax({type: 'POST', url: '/api/image/tag/'+id, data: data, success: function () {
     ReactDOM.render(<Table reload={true} />, document.getElementById('data'));
   }});
 }
@@ -236,6 +236,9 @@ function _client(multiple, single) {
 }
 
 var TableRow = React.createClass({
+  propTypes: {
+    content: React.PropTypes.object.isRequired
+  },
   inspect: function() {
     var tr = $(ReactDOM.findDOMNode(this)),
         id = tr.attr('data-image-id'),
@@ -252,7 +255,6 @@ var TableRow = React.createClass({
   run: function() {
     if (isViewOnly) return;
     var tr = $(ReactDOM.findDOMNode(this)),
-        id = tr.attr('data-image-id'),
         name = tr.attr('data-image-name'),
         popup = $('#image-run');
     $('#run-scripts').val('docker run ' + name);
@@ -357,7 +359,7 @@ var TableRow = React.createClass({
 
 var Table = React.createClass({
   propTypes: {
-    reload: React.PropTypes.bool.isRequired,
+    reload: React.PropTypes.bool.isRequired
   },
   getInitialState: function() {
     return {data: {client: '', images: []}};

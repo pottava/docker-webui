@@ -48,10 +48,10 @@ $(document).ready(function () {
     _rename(client, name, newname);
     app.func.stop(e);
   });
-  $('#container-commit').on('shown.bs.modal', function (e) {
+  $('#container-commit').on('shown.bs.modal', function () {
     $('#container-commit .tag').focus();
   });
-  $('#container-commit .act-commit').click(function (e) {
+  $('#container-commit .act-commit').click(function () {
     var popup = $('#container-commit'),
         name = popup.find('.container-name').val(),
         client = popup.find('.client-id').val(),
@@ -68,7 +68,7 @@ $(document).ready(function () {
   });
 });
 
-$(window).keyup(function (e) {
+$(window).keyup(function () {
   var search = $('#search-text');
   if (search.is(':focus')) {
     _search();
@@ -184,7 +184,7 @@ function _detail(arg) {
     details.text(arg.format(data)).fadeIn();
     popup.modal('show');
     last = arg;
-  }, error: function (xhr, status, err) {
+  }, error: function () {
     arg.err && alert(arg.err)
   }});
 }
@@ -217,6 +217,9 @@ function _client(multiple, single) {
 }
 
 var TableRow = React.createClass({
+  propTypes: {
+    content: React.PropTypes.object.isRequired
+  },
   inspect: function() {
     var tr = $(ReactDOM.findDOMNode(this)),
         id = tr.attr('data-container-id'),
@@ -401,7 +404,7 @@ var TableRow = React.createClass({
 
 var Table = React.createClass({
   propTypes: {
-    reload: React.PropTypes.bool.isRequired,
+    reload: React.PropTypes.bool.isRequired
   },
   getInitialState: function() {
     return {data: []};

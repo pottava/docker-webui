@@ -19,23 +19,26 @@
         "react"
     ],
     "settings": {
-      "react": {
-        "pragma": "React"
-      }
+        "react": {
+            "pragma": "React"
+        }
     },
     "rules": {
         "indent": [
             0
-        ]
+        ],
+        "no-irregular-whitespace": 0
     },
     "globals": {
-      "jQuery": true,
-      "$": true,
-      "React": true,
-      "ReactDOM": true,
-      "app": true
+        "jQuery": true,
+        "$": true,
+        "React": true,
+        "ReactDOM": true,
+        "app": true,
+        "nv": true,
+        "d3": true
     },
     "envs": [
-      "browser"
+        "browser"
     ]
 }

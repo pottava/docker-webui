@@ -2,11 +2,14 @@
 
 var browserify = require('browserify');
 var gulp = require('gulp');
+var gutil = require('gulp-util');
+var shell = require('gulp-shell');
 var autoprefixer = require("gulp-autoprefixer");
 var plumber = require("gulp-plumber");
 var rename = require('gulp-rename');
 var sass = require("gulp-sass");
 var uglify = require("gulp-uglify");
+var eslint = require('gulp-eslint');
 var reactify = require('reactify');
 var through  = require('through2');
 var buffer = require('vinyl-buffer');
@@ -21,22 +24,24 @@ gulp.task("react", function() {
           }
       );
   });
-  gulp.src('/gulp/monitor/app/assets/js/**/*.jsx')
+  gulp.src('/monitor/app/assets/js/**/*.jsx')
+      .pipe(eslint({config: 'eslint.json'}))
+      .pipe(eslint.formatEach('compact', process.stderr))
       .pipe(browserified)
       .pipe(rename({extname: '.js'}))
       .pipe(uglify())
-      .pipe(gulp.dest("/gulp/monitor/app/assets/js/min"));
+      .pipe(gulp.dest("/monitor/app/assets/js/min"));
 });
 
 gulp.task("sass", function() {
-  gulp.src("/gulp/monitor/app/assets/scss/**/*.scss")
+  gulp.src("/monitor/app/assets/scss/**/*.scss")
       .pipe(plumber())
       .pipe(sass())
       .pipe(autoprefixer())
-      .pipe(gulp.dest("/gulp/monitor/app/assets/css"));
+      .pipe(gulp.dest("/monitor/app/assets/css"));
 });
 
 gulp.task("default", function() {
-    gulp.watch("/gulp/monitor/app/assets/js/**/*.jsx", ["react"]);
-    gulp.watch("/gulp/monitor/app/assets/scss/**/*.scss", ["sass"]);
+    gulp.watch("/monitor/app/assets/js/**/*.jsx", ["react"]);
+    gulp.watch("/monitor/app/assets/scss/**/*.scss", ["sass"]);
 });

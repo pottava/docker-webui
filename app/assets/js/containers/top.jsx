@@ -3,6 +3,10 @@ $(document).ready(function () {
 });
 
 var TableRow = React.createClass({
+  propTypes: {
+    index: React.PropTypes.integer.isRequired,
+    content: React.PropTypes.object.isRequired
+  },
   render: function() {
     var process = this.props.content;
     return (

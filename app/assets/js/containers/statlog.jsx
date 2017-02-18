@@ -76,6 +76,9 @@ function refreshLogs() {
 }
 
 var StatTableRow = React.createClass({
+  propTypes: {
+    content: React.PropTypes.object.isRequired
+  },
   render: function() {
     var stat = this.props.content.current,
         prev = this.props.content.previous,
@@ -170,6 +173,9 @@ ReactDOM.render(<StatTable />, document.getElementById('statistics'));
 
 
 var LogTableRow = React.createClass({
+  propTypes: {
+    content: React.PropTypes.object.isRequired
+  },
   render: function() {
     var log = this.props.content;
     return (

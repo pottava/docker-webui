@@ -10,12 +10,13 @@ var filters = {
     storedCPUs = [],
     storedMems = [],
     refreshWindow = app.storage.get('refresh-statistics', 2),
-    clients = 0,
     countup = 0;
+
+window.num_clients = 0;
 
 $(document).ready(function () {
   $('#menu-statistics').addClass('active');
-  clients = parseInt($('#number-of-clients').val(), 10);
+  window.num_clients = parseInt($('#number-of-clients').val(), 10);
 
   setRefreshWindow(refreshWindow);
   $('#refresh-window a').click(function(e) {
@@ -85,19 +86,6 @@ function refreshStats() {
     ReactDOM.render(<Table />, document.getElementById('data'));
   }
   setTimeout(refreshStats, Math.max(1, refreshWindow) * 1000);
-}
-
-function _find(arr, key, def) {
-  var result = def ? def : '';
-  if (! arr) {
-    return result;
-  }
-  $.map(arr, function (value) {
-    if (value.split('=')[0] == key) {
-      result = value.split('=')[1];
-    }
-  });
-  return result;
 }
 
 function _setClientOption(clients) {
@@ -260,6 +248,10 @@ function _spliceStoredData(arr, names) {
 }
 
 var TableRow = React.createClass({
+  propTypes: {
+    index: React.PropTypes.integer.isRequired,
+    content: React.PropTypes.object.isRequired
+  },
   render: function() {
     var name = this.props.content.name,
         stat = this.props.content.current && this.props.content.current,
@@ -305,7 +297,7 @@ var Table = React.createClass({
     return {data: {stats: [], multiple: false}};
   },
   load: function(sender) {
-    var self = this, conditions = {};
+    var conditions = {};
     if (filters.client != -1) conditions.client = filters.client;
 
     app.func.ajax({url: '/api/statistics', data: conditions, success: function (data) {
@@ -375,7 +367,7 @@ var Table = React.createClass({
       var names = {},
           pie = {CPU: [], Mem: []},
           multiple = (data.length > 1);
-      $.map(stats, function (record, index) {
+      $.map(stats, function (record) {
         var client = record.client,
             name = record.key.substring(1).replace(',/', ', ') + _endpoint(multiple, client.endpoint),
             stat = record.stat,
@@ -415,7 +407,7 @@ var Table = React.createClass({
         });
         return lineChartCPU.yDomain([0, max]);
       });
-      if ((clients = 1) || (filters.client != -1)) {
+      if ((window.num_clients = 1) || (filters.client != -1)) {
         var remain = 100;
         $.map(pie.CPU, function (record) {
           remain -= record.value;
@@ -430,8 +422,8 @@ var Table = React.createClass({
         });
         return lineChartMem.yDomain([0, max]);
       });
-      if ((clients = 1) || (filters.client != -1)) {
-        var remain = 100;
+      if ((window.num_clients = 1) || (filters.client != -1)) {
+        remain = 100;
         $.map(pie.Mem, function (record) {
           remain -= record.value;
         });

@@ -3,6 +3,9 @@ $(document).ready(function () {
 });
 
 var TableRow = React.createClass({
+  propTypes: {
+    content: React.PropTypes.object.isRequired
+  },
   render: function() {
     var history = this.props.content;
     return (

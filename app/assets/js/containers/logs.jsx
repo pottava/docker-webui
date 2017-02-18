@@ -171,6 +171,9 @@ function _setLabelFilter(labels) {
 }
 
 var TableRow = React.createClass({
+  propTypes: {
+    content: React.PropTypes.object.isRequired
+  },
   statlog: function() {
     var tr = $(ReactDOM.findDOMNode(this)),
         id = tr.attr('data-container-id'),
@@ -193,7 +196,7 @@ var TableRow = React.createClass({
 
 var Table = React.createClass({
   propTypes: {
-    reload: React.PropTypes.bool.isRequired,
+    reload: React.PropTypes.bool.isRequired
   },
   getInitialState: function() {
     return {data: []};
@@ -279,7 +282,7 @@ var Table = React.createClass({
   },
   render: function() {
     var rows = [];
-    this.state.data.map(function(record, index) {
+    this.state.data.map(function(record) {
       if (! record.log) return;
       rows.push(<TableRow key={record.client + record.id + record.key} content={record} />)
     });

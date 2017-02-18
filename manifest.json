@@ -4,7 +4,7 @@
             "branch": "master"
         },
         "golang.org/x/net": {
-            "revision": "b6d7b1396ec874c3b00f6c84cd4301a17c56c8ed"
+            "branch": "master"
         }
     }
 }

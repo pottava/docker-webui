@@ -23,8 +23,7 @@ services:
   gulp:
     image: docker-webui/assets
     build: ./assets
-    command: gulp
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ../:/gulp/monitor/
+      - ../:/monitor/
     container_name: gulp
