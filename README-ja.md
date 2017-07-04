@@ -103,15 +103,15 @@ Go言語環境のある方はこちらでも
 
 Option (config.json)   | Environment Variables     | Description                                       | Default
 ---------------------- | ------------------------- | ------------------------------------------------- | ---------
-Name                   | APP_NAME                  | アプリケーションの名前                                 | `docker web-ui`
+Name                   | APP_NAME                  | アプリケーションの名前                                 | 'docker web-ui'
 Port                   | APP_PORT                  | アプリが利用するポート                                 | 9000
-                       | CONFIG_FILE_PATH          | config.json の配置パス                              |  `/etc/docker-webui/config.json`
+　 | CONFIG_FILE_PATH | config.json の配置パス | '/etc/docker-webui/config.json'
 ViewOnly               | APP_VIEW_ONLY             | Dockerの状態変更系アクションを抑制します                 | false
 LogLevel               | APP_LOG_LEVEL             | 1:fatal, 2:err, 3:warn, 4:info, 5:debug, 6:trace  | 4
-LabelOverrideNames     | APP_LABEL_OVERRIDE_NAMES  | コンテナの表示名を特定のラベルの値に上書きできます           | ``
-LabelFilters           | APP_LABEL_FILTERS         | フィルタリングに利用するラベルを指定できます               | [`all`]
+LabelOverrideNames     | APP_LABEL_OVERRIDE_NAMES  | コンテナの表示名を特定のラベルの値に上書きできます           |
+LabelFilters           | APP_LABEL_FILTERS         | フィルタリングに利用するラベルを指定できます               | ['all']
 DockerEndpoints        | DOCKER_HOST               | docker APIのエンドポイント (tcp or socket)           | [`unix:///var/run/docker.sock`]
-DockerCertPath         | DOCKER_CERT_PATH          | TLS接続に使う証明書があれば、その絶対パス                 | [``]
+DockerCertPath         | DOCKER_CERT_PATH          | TLS接続に使う証明書があれば、その絶対パス                 | ['']
 DockerPullBeginTimeout | DOCKER_PULL_BEGIN_TIMEOUT | docker pull開始までのタイムアウト時間                   | 3 * time.Minute
 DockerPullTimeout      | DOCKER_PULL_TIMEOUT       | docker pull実行のタイムアウト時間                      | 2 * time.Hour
 DockerStatTimeout      | DOCKER_STAT_TIMEOUT       | docker stat実行のタイムアウト時間                      | 5 * time.Second
@@ -121,7 +121,7 @@ DockerRestartTimeout   | DOCKER_RESTART_TIMEOUT    | docker restart実行のタ�
 DockerKillTimeout      | DOCKER_KILL_TIMEOUT       | docker kill実行のタイムアウト時間                      | 10 * time.Second
 DockerRmTimeout        | DOCKER_RM_TIMEOUT         | docker rm実行のタイムアウト時間                        | 5 * time.Minute
 DockerCommitTimeout    | DOCKER_COMMIT_TIMEOUT     | docker commit実行のタイムアウト時間                    | 30 * time.Second
-StaticFileHost         | APP_STATIC_FILE_HOST      | 静的ファイル配信ホスト名                               | ``
-StaticFilePath         | APP_STATIC_FILE_PATH      | ホスト上の静的ファイル配置パス                          | `gopath + /src/github.com/pottava/docker-webui/app`
+StaticFileHost         | APP_STATIC_FILE_HOST      | 静的ファイル配信ホスト名                               | 
+StaticFilePath         | APP_STATIC_FILE_PATH      | ホスト上の静的ファイル配置パス                          | '$GOPATH + /src/github.com/pottava/docker-webui/app'
 PreventSelfStop        | APP_PREVENT_SELF_STOP     | このアプリ自身をWebUIから停止することを防ぎます            | true
 HiddenContainers       | APP_HIDDEN_CONTAINERS     | 画面上表示したくないコンテナを指定できます                 | []

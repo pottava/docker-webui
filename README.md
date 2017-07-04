@@ -1,7 +1,7 @@
 Docker Web-UI
 ---
 
-Supported tags and respective `Dockerfile` links:
+Supported tags and respective `Dockerfile` links:  
 ・latest ([production/Dockerfile](https://github.com/pottava/docker-webui/blob/master/production/Dockerfile))
 
 ## Description
@@ -107,15 +107,15 @@ You can set environment variables or use [config.json](https://github.com/pottav
 
 Option (config.json)   | Environment Variables     | Description                                       | Default
 ---------------------- | ------------------------- | ------------------------------------------------- | ---------
-Name                   | APP_NAME                  | name of this application                          | `docker web-ui`
+Name                   | APP_NAME                  | name of this application                          | 'docker web-ui'
 Port                   | APP_PORT                  | port the app is listening on                      | 9000
-                       | CONFIG_FILE_PATH          | path of config.json                               |  `/etc/docker-webui/config.json`
+　 | CONFIG_FILE_PATH | path of config.json | '/etc/docker-webui/config.json'
 ViewOnly               | APP_VIEW_ONLY             | if you set true, you cannot change docker state   | false
 LogLevel               | APP_LOG_LEVEL             | 1:fatal, 2:err, 3:warn, 4:info, 5:debug, 6:trace  | 4
-LabelOverrideNames     | APP_LABEL_OVERRIDE_NAMES  | override containers name by its label value       | ``
-LabelFilters           | APP_LABEL_FILTERS         | labels for filtering containers & images          | [`all`]
+LabelOverrideNames     | APP_LABEL_OVERRIDE_NAMES  | override containers name by its label value       | 
+LabelFilters           | APP_LABEL_FILTERS         | labels for filtering containers & images          | ['all']
 DockerEndpoints        | DOCKER_HOST               | docker API endpoints (tcp or socket)              | [`unix:///var/run/docker.sock`]
-DockerCertPath         | DOCKER_CERT_PATH          | set certifications' absolute path on the host     | [``]
+DockerCertPath         | DOCKER_CERT_PATH          | set certifications' absolute path on the host     | ['']
 DockerPullBeginTimeout | DOCKER_PULL_BEGIN_TIMEOUT | timeout of docker pull to start                   | 3 * time.Minute
 DockerPullTimeout      | DOCKER_PULL_TIMEOUT       | timeout of docker pull                            | 2 * time.Hour
 DockerStatTimeout      | DOCKER_STAT_TIMEOUT       | timeout of docker stat                            | 5 * time.Second
@@ -125,8 +125,8 @@ DockerRestartTimeout   | DOCKER_RESTART_TIMEOUT    | timeout of docker restart  
 DockerKillTimeout      | DOCKER_KILL_TIMEOUT       | timeout of docker kill                            | 10 * time.Second
 DockerRmTimeout        | DOCKER_RM_TIMEOUT         | timeout of docker rm                              | 5 * time.Minute
 DockerCommitTimeout    | DOCKER_COMMIT_TIMEOUT     | timeout of docker commit                          | 30 * time.Second
-StaticFileHost         | APP_STATIC_FILE_HOST      | host name which provides static files             | ``
-StaticFilePath         | APP_STATIC_FILE_PATH      | static file path on the host                      | `gopath + /src/github.com/pottava/docker-webui/app`
+StaticFileHost         | APP_STATIC_FILE_HOST      | host name which provides static files             | 
+StaticFilePath         | APP_STATIC_FILE_PATH      | static file path on the host                      | '$GOPATH + /src/github.com/pottava/docker-webui/app'
 PreventSelfStop        | APP_PREVENT_SELF_STOP     | prevent to stop this app itself if you set true   | true
 HiddenContainers       | APP_HIDDEN_CONTAINERS     | hide specified containers if you like             | []
 
