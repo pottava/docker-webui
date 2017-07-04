@@ -1,6 +1,5 @@
 Docker Web-UI
 ---
-[![](https://badge.imagelayers.io/pottava/docker-webui:latest.svg)](https://imagelayers.io/?images=pottava/docker-webui:latest 'Get your own badge on imagelayers.io')
 
 Supported tags and respective `Dockerfile` links:
 ・latest ([production/Dockerfile](https://github.com/pottava/docker-webui/blob/master/production/Dockerfile))

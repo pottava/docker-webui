@@ -44,11 +44,11 @@
   <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/jquery-1.12.4.min.js"></script>
   <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/bootstrap-3.3.6.min.js"></script>
   {{ if eq .Mode "production"}}
-  <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/react-15.4.2.min.js"></script>
-  <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/react-dom-15.4.2.min.js"></script>
+  <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/react-15.6.1.min.js"></script>
+  <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/react-dom-15.6.1.min.js"></script>
   {{ else }}
-  <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/react-15.4.2.js"></script>
-  <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/react-dom-15.4.2.js"></script>
+  <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/react-15.6.1.js"></script>
+  <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/lib/react-dom-15.6.1.js"></script>
   {{ end }}
   <script type="text/javascript" src="{{ .StaticFileHost }}/assets/js/app.js"></script>
   {{ template "js" . }}
