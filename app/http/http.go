@@ -195,7 +195,7 @@ func custom(log, cors, validate bool, f func(w http.ResponseWriter, r *http.Requ
 				break
 			}
 		}
-		writer := &customResponseWriter{Writer: ioWriter, ResponseWriter: w, status: 200}
+		writer := &customResponseWriter{Writer: ioWriter, ResponseWriter: w, status: http.StatusOK}
 
 		// route to the controllers
 		f(writer, r)
