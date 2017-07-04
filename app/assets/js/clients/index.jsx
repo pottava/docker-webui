@@ -108,9 +108,9 @@ var TableRow = React.createClass({
           <td className="data-index endpoint">
             <a onClick={rowclass.handleDetail} style={{outline: 'none', textDecoration: 'none'}}>{client.endpoint}</a>
           </td>
-          <td className="data-index">{_find(info, 'Containers')}</td>
+          <td className="data-index">{info.Containers}</td>
           <td className="data-index cert" style={{display: 'none'}}>{client.certPath}</td>
-          <td className="data-index">{_find(info, 'Name')}</td>
+          <td className="data-index">{info.Name}</td>
           <td className="data-index">{_find(version, 'Version')}</td>
           <td className="data-index">{_find(version, 'ApiVersion')}</td>
           <td className="data-index">{client.isActive ? 'yes' : 'no'}</td>

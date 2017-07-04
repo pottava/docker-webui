@@ -249,8 +249,7 @@ function _spliceStoredData(arr, names) {
 
 var TableRow = React.createClass({
   propTypes: {
-    index: React.PropTypes.integer.isRequired,
-    content: React.PropTypes.object.isRequired
+    content: React.PropTypes.object
   },
   render: function() {
     var name = this.props.content.name,
@@ -280,7 +279,7 @@ var TableRow = React.createClass({
       };
     }
     return (
-        <tr key={this.props.index}>
+        <tr>
           <td className="data-name">{name.substring(1).replace(',/', ', ')}</td>
           <td className="data-name">{time}</td>
           <td className="data-name">{(cpu_percent+'').substring(0, 4)}%</td>
@@ -442,10 +441,10 @@ var Table = React.createClass({
     var multiple = this.state.data.multiple,
         data = this.state.data.stats,
         rows = [];
-    $.map(data, function (record, index) {
+    $.map(data, function (record) {
       var client = record.client,
           name = record.key + _endpoint(multiple, client.endpoint);
-      rows.push(<TableRow key={record.key+'@'+client.id} index={record.key+'@'+index} content={{
+      rows.push(<TableRow key={record.key+'@'+client.id} content={{
         name: name,
         current: record.stat,
         previous: _findPrivious(client.endpoint, record.id, record.key)

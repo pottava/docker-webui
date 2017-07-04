@@ -4,13 +4,12 @@ $(document).ready(function () {
 
 var TableRow = React.createClass({
   propTypes: {
-    index: React.PropTypes.integer.isRequired,
-    content: React.PropTypes.object.isRequired
+    content: React.PropTypes.array
   },
   render: function() {
     var process = this.props.content;
     return (
-        <tr key={this.props.index}>
+        <tr>
           <td className="data-name">{process[0]}</td>
           <td className="data-name">{process[1]}</td>
           <td className="data-name">{process[2]}</td>
@@ -50,8 +49,8 @@ var Table = React.createClass({
       );
     }
     var titles = this.state.data.Titles;
-    var rows = this.state.data.Processes.map(function(record, index) {
-      return <TableRow index={index} content={record} />
+    var rows = this.state.data.Processes.map(function (record) {
+      return <TableRow key={record[0]} content={record} />
     });
     return (
         <table className="table table-striped table-hover">

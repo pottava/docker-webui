@@ -218,7 +218,7 @@ function _client(multiple, single) {
 
 var TableRow = React.createClass({
   propTypes: {
-    content: React.PropTypes.object.isRequired
+    content: React.PropTypes.object
   },
   inspect: function() {
     var tr = $(ReactDOM.findDOMNode(this)),
@@ -403,9 +403,6 @@ var TableRow = React.createClass({
 });
 
 var Table = React.createClass({
-  propTypes: {
-    reload: React.PropTypes.bool.isRequired
-  },
   getInitialState: function() {
     return {data: []};
   },

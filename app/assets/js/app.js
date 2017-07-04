@@ -24,7 +24,7 @@ var app = {};
 			success: function (data) {
 				arg.success && arg.success(data);
 			},
-			error: function(xhr, status, err) {
+			error: function (xhr, status, err) {
 				if (arg.error) {
 					arg.error(xhr, status, err);
 					return;

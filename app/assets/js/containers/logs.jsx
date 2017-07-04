@@ -172,7 +172,7 @@ function _setLabelFilter(labels) {
 
 var TableRow = React.createClass({
   propTypes: {
-    content: React.PropTypes.object.isRequired
+    content: React.PropTypes.object
   },
   statlog: function() {
     var tr = $(ReactDOM.findDOMNode(this)),
@@ -196,7 +196,7 @@ var TableRow = React.createClass({
 
 var Table = React.createClass({
   propTypes: {
-    reload: React.PropTypes.bool.isRequired
+    content: React.PropTypes.object
   },
   getInitialState: function() {
     return {data: []};

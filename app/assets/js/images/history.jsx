@@ -4,13 +4,14 @@ $(document).ready(function () {
 
 var TableRow = React.createClass({
   propTypes: {
-    content: React.PropTypes.object.isRequired
+    content: React.PropTypes.object
   },
   render: function() {
-    var history = this.props.content;
+    var history = this.props.content,
+        id = (history.Id == '<missing>') ? '' : history.Id.replace(/sha256:/, '').substring(0, 5);
     return (
         <tr>
-          <td className="data-index">{history.Id.substring(0, 5)}</td>
+          <td className="data-index">{id}</td>
           <td className="data-name no-wrap">{history.Tags}</td>
           <td className="data-name no-wrap">{history.Size && app.func.byteFormat(history.Size)}</td>
           <td className="data-name no-wrap">{app.func.relativeTime(new Date(history.Created * 1000))}</td>

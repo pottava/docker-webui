@@ -237,7 +237,7 @@ function _client(multiple, single) {
 
 var TableRow = React.createClass({
   propTypes: {
-    content: React.PropTypes.object.isRequired
+    content: React.PropTypes.object
   },
   inspect: function() {
     var tr = $(ReactDOM.findDOMNode(this)),
@@ -359,7 +359,7 @@ var TableRow = React.createClass({
 
 var Table = React.createClass({
   propTypes: {
-    reload: React.PropTypes.bool.isRequired
+    content: React.PropTypes.object
   },
   getInitialState: function() {
     return {data: {client: '', images: []}};
@@ -463,6 +463,9 @@ var Table = React.createClass({
             match &= innerMatch;
           });
           if (! match) return;
+        }
+        if (image.repoTags == undefined) {
+          image.repoTags = [];
         }
         image.repoTags.sort(function (a, b) {
           if (a.tag < b.tag)

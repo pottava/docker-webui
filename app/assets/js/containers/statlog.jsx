@@ -8,35 +8,6 @@ var statistics = {
     },
     isViewOnly = false;
 
-$(document).ready(function () {
-  $('#menu-logs').addClass('active');
-  isViewOnly = ($('#mode-view-only').val() == 'true');
-
-  $('#actions>.btn-default').hover(function () {
-    $(this).addClass($(this).attr('data-hover'));
-  }, function () {
-    $(this).removeClass($(this).attr('data-hover'));
-  }).click(function (e) {
-    _action(parseInt($(this).blur().attr('href').substring(1), 10));
-    app.func.stop(e);
-  });
-
-  setRefreshWindow(log_conf.refresh);
-  $('#refresh-window a').click(function(e) {
-    setRefreshWindow(parseInt($(this).attr('href').substring(1), 10));
-    app.func.stop(e);
-  });
-  setMonitoringCount(log_conf.count);
-  $('#monitoring-count a').click(function(e) {
-    setMonitoringCount(parseInt($(this).attr('href').substring(1), 10));
-    app.func.stop(e);
-  });
-  setInterval(function () {
-    ReactDOM.render(<StatTable />, document.getElementById('statistics'));
-  }, 1000);
-  refreshLogs();
-});
-
 function _action(flag) {
   if (isViewOnly) return;
 
@@ -68,16 +39,10 @@ function setMonitoringCount(value) {
   app.storage.set('monitoring-count-stat', value);
   group.find('.caption').text(a.text()).blur();
 }
-function refreshLogs() {
-  if (log_conf.refresh > 0) {
-    ReactDOM.render(<LogTable />, document.getElementById('logs'));
-  }
-  setTimeout(refreshLogs, Math.max(1, log_conf.refresh) * 1000);
-}
 
 var StatTableRow = React.createClass({
   propTypes: {
-    content: React.PropTypes.object.isRequired
+    content: React.PropTypes.object
   },
   render: function() {
     var stat = this.props.content.current,
@@ -169,12 +134,10 @@ var StatTable = React.createClass({
   }
 });
 
-ReactDOM.render(<StatTable />, document.getElementById('statistics'));
-
 
 var LogTableRow = React.createClass({
   propTypes: {
-    content: React.PropTypes.object.isRequired
+    content: React.PropTypes.object
   },
   render: function() {
     var log = this.props.content;
@@ -255,4 +218,41 @@ var LogTable = React.createClass({
   }
 });
 
-ReactDOM.render(<LogTable />, document.getElementById('logs'));
+$(document).ready(function () {
+  $('#menu-logs').addClass('active');
+  isViewOnly = ($('#mode-view-only').val() == 'true');
+
+  $('#actions>.btn-default').hover(function () {
+    $(this).addClass($(this).attr('data-hover'));
+  }, function () {
+    $(this).removeClass($(this).attr('data-hover'));
+  }).click(function (e) {
+    _action(parseInt($(this).blur().attr('href').substring(1), 10));
+    app.func.stop(e);
+  });
+
+  setRefreshWindow(log_conf.refresh);
+  $('#refresh-window a').click(function(e) {
+    setRefreshWindow(parseInt($(this).attr('href').substring(1), 10));
+    app.func.stop(e);
+  });
+  setMonitoringCount(log_conf.count);
+  $('#monitoring-count a').click(function(e) {
+    setMonitoringCount(parseInt($(this).attr('href').substring(1), 10));
+    app.func.stop(e);
+  });
+
+  setInterval(function () {
+    ReactDOM.render(<StatTable />, document.getElementById('statistics'));
+  }, 1000);
+  ReactDOM.render(<StatTable />, document.getElementById('statistics'));
+
+  refreshLogs();
+});
+
+function refreshLogs() {
+  if (log_conf.refresh > 0) {
+    ReactDOM.render(<LogTable />, document.getElementById('logs'));
+  }
+  setTimeout(refreshLogs, Math.max(1, log_conf.refresh) * 1000);
+}

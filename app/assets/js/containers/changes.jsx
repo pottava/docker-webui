@@ -4,8 +4,7 @@ $(document).ready(function () {
 
 var TableRow = React.createClass({
   propTypes: {
-    index: React.PropTypes.integer.isRequired,
-    content: React.PropTypes.object.isRequired
+    content: React.PropTypes.object
   },
   render: function() {
     var change = this.props.content,
@@ -16,7 +15,7 @@ var TableRow = React.createClass({
       case 2: kind = 'Delete'; break;
     }
     return (
-        <tr key={this.props.index}>
+        <tr>
           <td className="data-name">{kind}</td>
           <td className="data-name">{change.Path}</td>
         </tr>
@@ -41,7 +40,7 @@ var Table = React.createClass({
     var rows;
     if (this.state.data.length > 0) {
       rows = this.state.data.map(function(record, index) {
-        return <TableRow index={index} content={record} />
+        return <TableRow key={index} content={record} />
       });
     } else {
       rows = <TableRow index={0} content={{Kind: -1, Path: 'There is no changed file.'}} />
