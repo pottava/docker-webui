@@ -9,6 +9,7 @@ type Config struct {
 	ViewOnly               bool
 	LogLevel               int
 	Mode                   string `trim:"true"`
+	PathPrefix             string
 	LabelOverrideNames     string `trim:"true"`
 	LabelFilters           []string
 	DockerEndpoints        []string

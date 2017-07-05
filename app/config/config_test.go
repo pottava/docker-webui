@@ -68,6 +68,7 @@ func TestComplete(t *testing.T) {
 	}
 	actual = *actual.merge(Config{
 		Mode:               "test",
+		PathPrefix:         "prefix",
 		ViewOnly:           true,
 		LabelOverrideNames: "com.github.pottava.name",
 		DockerCertPath:     []string{"cert-path"},

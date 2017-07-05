@@ -123,5 +123,6 @@ DockerRmTimeout        | DOCKER_RM_TIMEOUT         | docker rm実行のタイム
 DockerCommitTimeout    | DOCKER_COMMIT_TIMEOUT     | docker commit実行のタイムアウト時間                    | 30 * time.Second
 StaticFileHost         | APP_STATIC_FILE_HOST      | 静的ファイル配信ホスト名                               | 
 StaticFilePath         | APP_STATIC_FILE_PATH      | ホスト上の静的ファイル配置パス                          | '$GOPATH + /src/github.com/pottava/docker-webui/app'
+PathPrefix             | APP_PATH_PREFIX           | パスベースルーティングなどのための URL パスプリフィックス   | 
 PreventSelfStop        | APP_PREVENT_SELF_STOP     | このアプリ自身をWebUIから停止することを防ぎます            | true
 HiddenContainers       | APP_HIDDEN_CONTAINERS     | 画面上表示したくないコンテナを指定できます                 | []

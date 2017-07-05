@@ -127,6 +127,7 @@ DockerRmTimeout        | DOCKER_RM_TIMEOUT         | timeout of docker rm       
 DockerCommitTimeout    | DOCKER_COMMIT_TIMEOUT     | timeout of docker commit                          | 30 * time.Second
 StaticFileHost         | APP_STATIC_FILE_HOST      | host name which provides static files             | 
 StaticFilePath         | APP_STATIC_FILE_PATH      | static file path on the host                      | '$GOPATH + /src/github.com/pottava/docker-webui/app'
+PathPrefix             | APP_PATH_PREFIX           | URL Path prefix for path based routing            | 
 PreventSelfStop        | APP_PREVENT_SELF_STOP     | prevent to stop this app itself if you set true   | true
 HiddenContainers       | APP_HIDDEN_CONTAINERS     | hide specified containers if you like             | []
 

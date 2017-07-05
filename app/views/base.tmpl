@@ -13,10 +13,11 @@
 </head>
 <body>
   <header>
+    <input id="api-path-prefix" type="hidden" value="{{ .PathPrefix }}" />
     <div class="navbar navbar-default navbar-fixed-top">
       <div class="container">
         <div class="navbar-header">
-          <a href="/" class="navbar-brand">{{ .AppName }}</a>
+          <a href="{{ .PathPrefix }}/" class="navbar-brand">{{ .AppName }}</a>
           <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
@@ -24,13 +25,13 @@
         </div>
         <div class="navbar-collapse collapse" id="navbar-main">
           <ul class="nav navbar-nav">
-            <li id="menu-containers"><a href="/">containers</a></li>
-            <li id="menu-logs"><a href="/logs">logs</a></li>
-            <li id="menu-statistics"><a href="/statistics">stats</a></li>
+            <li id="menu-containers"><a href="{{ .PathPrefix }}/">containers</a></li>
+            <li id="menu-logs"><a href="{{ .PathPrefix }}/logs">logs</a></li>
+            <li id="menu-statistics"><a href="{{ .PathPrefix }}/statistics">stats</a></li>
             <li><div class="separator">|</div></li>
-            <li id="menu-images"><a href="/images">images</a></li>
+            <li id="menu-images"><a href="{{ .PathPrefix }}/images">images</a></li>
             <li><div class="separator">|</div></li>
-            <li id="menu-clients"><a href="/clients">clients</a></li>
+            <li id="menu-clients"><a href="{{ .PathPrefix }}/clients">clients</a></li>
           </ul>
         </div>
       </div>

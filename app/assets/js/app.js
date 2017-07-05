@@ -15,11 +15,14 @@ var app = {};
 		set : _set,
 		get : _get
 	};
+	$(document).ready(function () {
+		app.prefix = $('#api-path-prefix').val();
+	});
 
 	function _ajax(arg) {
 		var dt = arg.dataType ? arg.dataType : 'json';
 		$.ajax({
-			url: arg.url, type: arg.type ? arg.type : 'GET',
+			url: app.prefix+arg.url, type: arg.type ? arg.type : 'GET',
 			data: arg.data, dataType: dt,
 			success: function (data) {
 				arg.success && arg.success(data);
@@ -38,9 +41,9 @@ var app = {};
 		if (!e)
 			return false;
 		if (e && (e.ctrlKey || e.metaKey)) {
-			window.open(href, '_blank');
+			window.open(app.prefix+href, '_blank');
 		} else {
-			location.href = href;
+			location.href = app.prefix+href;
 		}
 	}
 	function _stop(e) {

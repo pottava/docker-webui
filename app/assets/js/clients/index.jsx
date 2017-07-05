@@ -33,7 +33,7 @@ $(document).ready(function () {
 
 function _add(endpoint) {
   var arg = {endpoint: endpoint, cert: ''};
-  app.func.ajax({type: 'POST', url:'/api/client/', data: arg, dataType: 'html', success: function () {
+  app.func.ajax({type: 'POST', url: '/api/client/', data: arg, dataType: 'html', success: function () {
     ReactDOM.render(<Table />, document.getElementById('data'));
   }, error: function (xhr, status, err) {
     var message = (xhr && xhr.responseText) ? xhr.responseText : err;
@@ -84,7 +84,7 @@ var TableRow = React.createClass({
         cert = tr.find('.cert').text(),
         client = {endpoint: endpoint, cert: cert},
         popup = $('#client-detail');
-    app.func.ajax({type: 'POST', url: '/api/client/', data: client, success: function (data) {
+    app.func.ajax({type: 'GET', url: '/api/client/', data: client, success: function (data) {
       popup.find('.detail-title').text(endpoint);
       popup.find('.details').text(JSON.stringify(data, true, ' '));
       popup.modal('show');

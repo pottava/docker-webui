@@ -20,14 +20,14 @@ import (
 func init() {
 	cfg := config.NewConfig()
 
-	http.Handle("/container/top/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		id := r.URL.Path[len("/container/top/"):]
+	http.Handle(cfg.PathPrefix+"/container/top/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+		id := r.URL.Path[len(cfg.PathPrefix+"/container/top/"):]
 		client, _ := util.RequestGetParam(r, "client")
 		params := struct{ ID, Name, Client string }{id, _label(id, client, cfg.LabelOverrideNames), client}
 		util.RenderHTML(w, []string{"containers/top.tmpl"}, params, nil)
 	}))
-	http.Handle("/container/statlog/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		id := r.URL.Path[len("/container/statlog/"):]
+	http.Handle(cfg.PathPrefix+"/container/statlog/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+		id := r.URL.Path[len(cfg.PathPrefix+"/container/statlog/"):]
 		client, _ := util.RequestGetParam(r, "client")
 		params := struct {
 			ID, Name, Client string
@@ -35,17 +35,17 @@ func init() {
 		}{id, _label(id, client, cfg.LabelOverrideNames), client, cfg.ViewOnly}
 		util.RenderHTML(w, []string{"containers/statlog.tmpl"}, params, nil)
 	}))
-	http.Handle("/container/changes/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		id := r.URL.Path[len("/container/changes/"):]
+	http.Handle(cfg.PathPrefix+"/container/changes/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+		id := r.URL.Path[len(cfg.PathPrefix+"/container/changes/"):]
 		client, _ := util.RequestGetParam(r, "client")
 		params := struct{ ID, Name, Client string }{id, _label(id, client, cfg.LabelOverrideNames), client}
 		util.RenderHTML(w, []string{"containers/changes.tmpl"}, params, nil)
 	}))
-	http.Handle("/logs", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/logs", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		params := struct{ LabelFilters string }{strings.Join(cfg.LabelFilters, ",")}
 		util.RenderHTML(w, []string{"containers/logs.tmpl"}, params, nil)
 	}))
-	http.Handle("/statistics", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/statistics", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		clients, err := models.LoadDockerClients()
 		if err != nil {
 			renderErrorJSON(w, err)
@@ -65,7 +65,7 @@ func init() {
 	 * @param q string search words
 	 * @return []model.DockerContainer
 	 */
-	http.Handle("/api/containers", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/containers", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		type container struct {
 			Client     *models.DockerClient     `json:"client"`
 			Containers []models.DockerContainer `json:"containers"`
@@ -103,7 +103,7 @@ func init() {
 		util.RenderJSON(w, result, nil)
 	}))
 
-	http.Handle("/api/statistics", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/statistics", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		var dockers []*engine.Client
 		if c, found := util.RequestGetParam(r, "client"); found {
 			if docker, ok := client(w, c); ok {
@@ -172,7 +172,7 @@ func init() {
 		util.RenderJSON(w, stats, nil)
 	}))
 
-	http.Handle("/api/logs", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/logs", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		count := util.RequestGetParamI(r, "count", 100)
 		var dockers []*engine.Client
 		if c, found := util.RequestGetParam(r, "client"); found {
@@ -241,25 +241,25 @@ func init() {
 	 * A container's API
 	 */
 	// inspect
-	http.Handle("/api/container/inspect/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/container/inspect/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if docker, ok := client(w, util.RequestGetParamS(r, "client", "")); ok {
-			id := r.URL.Path[len("/api/container/inspect/"):]
+			id := r.URL.Path[len(cfg.PathPrefix+"/api/container/inspect/"):]
 			meta := docker.InspectContainer(id)
 			util.RenderJSON(w, meta.Container, meta.Error)
 		}
 	}))
 	// top
-	http.Handle("/api/container/top/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/container/top/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if docker, ok := client(w, util.RequestGetParamS(r, "client", "")); ok {
-			id := r.URL.Path[len("/api/container/top/"):]
+			id := r.URL.Path[len(cfg.PathPrefix+"/api/container/top/"):]
 			args := util.RequestGetParamS(r, "args", "aux")
 			util.RenderJSON(w, docker.Top(id, args), nil)
 		}
 	}))
 	// stats
-	http.Handle("/api/container/stats/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/container/stats/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if docker, ok := client(w, util.RequestGetParamS(r, "client", "")); ok {
-			id := r.URL.Path[len("/api/container/stats/"):]
+			id := r.URL.Path[len(cfg.PathPrefix+"/api/container/stats/"):]
 			result, err := docker.Stats(id, util.RequestGetParamI(r, "count", 1))
 			if err != nil {
 				renderErrorJSON(w, err)
@@ -269,9 +269,9 @@ func init() {
 		}
 	}))
 	// logs
-	http.Handle("/api/container/logs/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/container/logs/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if docker, ok := client(w, util.RequestGetParamS(r, "client", "")); ok {
-			id := r.URL.Path[len("/api/container/logs/"):]
+			id := r.URL.Path[len(cfg.PathPrefix+"/api/container/logs/"):]
 			count := util.RequestGetParamI(r, "count", 100)
 			stdout, stderr, err := docker.Logs(id, count, 1*time.Second)
 			if err != nil {
@@ -288,21 +288,21 @@ func init() {
 		}
 	}))
 	// diff
-	http.Handle("/api/container/changes/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/container/changes/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if docker, ok := client(w, util.RequestGetParamS(r, "client", "")); ok {
-			id := r.URL.Path[len("/api/container/changes/"):]
+			id := r.URL.Path[len(cfg.PathPrefix+"/api/container/changes/"):]
 			util.RenderJSON(w, docker.Changes(id), nil)
 		}
 	}))
 
 	// restart
-	http.Handle("/api/container/restart/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/container/restart/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.NotFound(w, r)
 			return
 		}
 		if docker, ok := client(w, util.RequestPostParamS(r, "client", "")); ok {
-			meta := docker.Restart(r.URL.Path[len("/api/container/restart/"):], 5)
+			meta := docker.Restart(r.URL.Path[len(cfg.PathPrefix+"/api/container/restart/"):], 5)
 			if meta.Error != nil {
 				renderErrorJSON(w, meta.Error)
 				return
@@ -311,13 +311,13 @@ func init() {
 		}
 	}))
 	// start
-	http.Handle("/api/container/start/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/container/start/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.NotFound(w, r)
 			return
 		}
 		if docker, ok := client(w, util.RequestPostParamS(r, "client", "")); ok {
-			meta := docker.Start(r.URL.Path[len("/api/container/start/"):])
+			meta := docker.Start(r.URL.Path[len(cfg.PathPrefix+"/api/container/start/"):])
 			if meta.Error != nil {
 				renderErrorJSON(w, meta.Error)
 				return
@@ -326,13 +326,13 @@ func init() {
 		}
 	}))
 	// stop
-	http.Handle("/api/container/stop/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/container/stop/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.NotFound(w, r)
 			return
 		}
 		if docker, ok := client(w, util.RequestPostParamS(r, "client", "")); ok {
-			meta := docker.Stop(r.URL.Path[len("/api/container/stop/"):])
+			meta := docker.Stop(r.URL.Path[len(cfg.PathPrefix+"/api/container/stop/"):])
 			if meta.Error != nil {
 				renderErrorJSON(w, meta.Error)
 				return
@@ -341,13 +341,13 @@ func init() {
 		}
 	}))
 	// kill
-	http.Handle("/api/container/kill/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/container/kill/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.NotFound(w, r)
 			return
 		}
 		if docker, ok := client(w, util.RequestPostParamS(r, "client", "")); ok {
-			meta := docker.Kill(r.URL.Path[len("/api/container/kill/"):], 5)
+			meta := docker.Kill(r.URL.Path[len(cfg.PathPrefix+"/api/container/kill/"):], 5)
 			if meta.Error != nil {
 				renderErrorJSON(w, meta.Error)
 				return
@@ -356,13 +356,13 @@ func init() {
 		}
 	}))
 	// rm
-	http.Handle("/api/container/rm/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/container/rm/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.NotFound(w, r)
 			return
 		}
 		if docker, ok := client(w, util.RequestPostParamS(r, "client", "")); ok {
-			err := docker.Rm(r.URL.Path[len("/api/container/rm/"):])
+			err := docker.Rm(r.URL.Path[len(cfg.PathPrefix+"/api/container/rm/"):])
 			if err != nil {
 				renderErrorJSON(w, err)
 				return
@@ -371,14 +371,14 @@ func init() {
 		}
 	}))
 	// rename
-	http.Handle("/api/container/rename/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/container/rename/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.NotFound(w, r)
 			return
 		}
 		if docker, ok := client(w, util.RequestPostParamS(r, "client", "")); ok {
 			if name, found := util.RequestPostParam(r, "name"); found {
-				err := docker.Rename(r.URL.Path[len("/api/container/rename/"):], name)
+				err := docker.Rename(r.URL.Path[len(cfg.PathPrefix+"/api/container/rename/"):], name)
 				message := "renamed successfully."
 				if err != nil {
 					message = err.Error()
@@ -389,7 +389,7 @@ func init() {
 		}
 	}))
 	// commit
-	http.Handle("/api/container/commit/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/container/commit/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.NotFound(w, r)
 			return
@@ -401,7 +401,7 @@ func init() {
 			author, _ := util.RequestPostParam(r, "author")
 
 			meta := docker.Commit(
-				r.URL.Path[len("/api/container/commit/"):],
+				r.URL.Path[len(cfg.PathPrefix+"/api/container/commit/"):],
 				repository, tag, massage, author)
 			if meta.Error != nil {
 				renderErrorJSON(w, meta.Error)
@@ -426,7 +426,7 @@ func init() {
 	 * Update by DockerHub
 	 * which pull an image again & restart the container to update its service
 	 */
-	http.Handle("/api/container/update", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/container/update", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.NotFound(w, r)
 			return

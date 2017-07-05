@@ -13,15 +13,15 @@ import (
 func init() {
 	cfg := config.NewConfig()
 
-	http.Handle("/images", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/images", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		params := struct {
 			LabelFilters string
 			ViewOnly     bool
 		}{strings.Join(cfg.LabelFilters, ","), cfg.ViewOnly}
 		util.RenderHTML(w, []string{"images/index.tmpl"}, params, nil)
 	}))
-	http.Handle("/image/history/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
-		id := r.URL.Path[len("/image/history/"):]
+	http.Handle(cfg.PathPrefix+"/image/history/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+		id := r.URL.Path[len(cfg.PathPrefix+"/image/history/"):]
 		client, _ := util.RequestGetParam(r, "client")
 		util.RenderHTML(w, []string{"images/history.tmpl"}, struct{ ID, Client string }{id, client}, nil)
 	}))
@@ -31,7 +31,7 @@ func init() {
 	 * @param q string search words
 	 * @return []model.DockerImage
 	 */
-	http.Handle("/api/images", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/images", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		type image struct {
 			Client *models.DockerClient `json:"client"`
 			Images []models.DockerImage `json:"images"`
@@ -66,25 +66,25 @@ func init() {
 	 * An image's API
 	 */
 	// inspect
-	http.Handle("/api/image/inspect/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/image/inspect/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if docker, ok := client(w, util.RequestGetParamS(r, "client", "")); ok {
-			id := r.URL.Path[len("/api/image/inspect/"):]
+			id := r.URL.Path[len(cfg.PathPrefix+"/api/image/inspect/"):]
 			meta := docker.InspectImage(id)
 			util.RenderJSON(w, meta.Image, meta.Error)
 		}
 	}))
 	// history
-	http.Handle("/api/image/history/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/image/history/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if docker, ok := client(w, util.RequestGetParamS(r, "client", "")); ok {
-			id := r.URL.Path[len("/api/image/history/"):]
+			id := r.URL.Path[len(cfg.PathPrefix+"/api/image/history/"):]
 			util.RenderJSON(w, docker.History(id), nil)
 		}
 	}))
 
 	// pull
-	http.Handle("/api/image/pull/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/image/pull/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if docker, ok := client(w, util.RequestGetParamS(r, "client", "")); ok {
-			meta := docker.Pull(r.URL.Path[len("/api/image/pull/"):])
+			meta := docker.Pull(r.URL.Path[len(cfg.PathPrefix+"/api/image/pull/"):])
 			if meta.Error != nil {
 				util.RenderJSON(w, meta.Error.Error(), nil)
 				return
@@ -93,13 +93,13 @@ func init() {
 		}
 	}))
 	// rmi
-	http.Handle("/api/image/rmi/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/image/rmi/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.NotFound(w, r)
 			return
 		}
 		if docker, ok := client(w, util.RequestPostParamS(r, "client", "")); ok {
-			err := docker.Rmi(r.URL.Path[len("/api/image/rmi/"):])
+			err := docker.Rmi(r.URL.Path[len(cfg.PathPrefix+"/api/image/rmi/"):])
 			message := "removed successfully."
 			if err != nil {
 				message = err.Error()
@@ -108,7 +108,7 @@ func init() {
 		}
 	}))
 	// tag
-	http.Handle("/api/image/tag/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/image/tag/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			http.NotFound(w, r)
 			return
@@ -116,7 +116,7 @@ func init() {
 		if docker, ok := client(w, util.RequestPostParamS(r, "client", "")); ok {
 			repository, _ := util.RequestPostParam(r, "repo")
 			tag, _ := util.RequestPostParam(r, "tag")
-			err := docker.Tag(r.URL.Path[len("/api/image/tag/"):], repository, tag)
+			err := docker.Tag(r.URL.Path[len(cfg.PathPrefix+"/api/image/tag/"):], repository, tag)
 			message := "tagged successfully."
 			if err != nil {
 				message = err.Error()

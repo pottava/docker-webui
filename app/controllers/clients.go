@@ -23,16 +23,16 @@ type cInformation struct {
 func init() {
 	cfg := config.NewConfig()
 
-	http.Handle("/clients", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/clients", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		params := struct{ ViewOnly bool }{cfg.ViewOnly}
 		util.RenderHTML(w, []string{"clients/index.tmpl"}, params, nil)
 	}))
-	http.Handle("/clients/export", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/clients/export", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Disposition", "attachment; filename=docker-clients.json")
 		w.Header().Set("Content-Type", "application/force-download")
 		http.ServeFile(w, r, models.DockerClientSavePath)
 	}))
-	http.Handle("/clients/import", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/clients/import", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		var err error
 		if err = r.ParseMultipartForm(32 << 20); nil != err {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -64,7 +64,7 @@ func init() {
 	/**
 	 * Docker client's API
 	 */
-	http.Handle("/api/clients", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/clients", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		result := []cInformation{}
 		clients, err := models.LoadDockerClients()
 		if err != nil {
@@ -97,7 +97,7 @@ func init() {
 		util.RenderJSON(w, result, nil)
 	}))
 
-	http.Handle("/api/client/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(cfg.PathPrefix+"/api/client/", util.Chain(func(w http.ResponseWriter, r *http.Request) {
 		if endpoint, found := util.RequestPostParam(r, "endpoint"); found {
 			cert, _ := util.RequestPostParam(r, "cert")
 			engine.Configure(endpoint, cert)
@@ -112,7 +112,7 @@ func init() {
 			return
 		}
 		if r.Method == "DELETE" {
-			models.RemoveDockerClient(r.URL.Path[len("/api/client/"):])
+			models.RemoveDockerClient(r.URL.Path[len(cfg.PathPrefix+"/api/client/"):])
 			w.WriteHeader(http.StatusOK)
 			return
 		}

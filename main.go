@@ -22,10 +22,10 @@ func main() {
 	cfg := config.NewConfig()
 	logs.Debug.Print("[config] " + cfg.String())
 
-	http.Handle("/", index(cfg))
+	http.Handle(cfg.PathPrefix+"/", index(cfg))
 	http.HandleFunc("/alive", alive)
 	http.HandleFunc("/version", version)
-	http.Handle("/assets/", assets(cfg))
+	http.Handle(cfg.PathPrefix+"/assets/", assets(cfg))
 
 	logs.Info.Printf("[service] listening on port %v", cfg.Port)
 	logs.Fatal.Print(http.ListenAndServe(":"+fmt.Sprint(cfg.Port), nil))
@@ -33,7 +33,7 @@ func main() {
 
 func index(cfg *config.Config) http.Handler {
 	return misc.Chain(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
+		if r.URL.Path != cfg.PathPrefix+"/" {
 			http.NotFound(w, r)
 			return
 		}
@@ -57,5 +57,5 @@ func version(w http.ResponseWriter, r *http.Request) {
 }
 func assets(cfg *config.Config) http.Handler {
 	fs := http.FileServer(http.Dir(path.Join(cfg.StaticFilePath, "assets")))
-	return misc.AssetsChain(http.StripPrefix("/assets/", fs).ServeHTTP)
+	return misc.AssetsChain(http.StripPrefix(cfg.PathPrefix+"/assets/", fs).ServeHTTP)
 }
