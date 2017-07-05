@@ -5,7 +5,9 @@ LABEL com.github.pottava.application="docker-webui" \
       com.github.pottava.usage="docker run --rm -p 80:9000 -v /var/run/docker.sock:/var/run/docker.sock pottava/docker-webui" \
       com.github.pottava.license="MIT"
 
-ENV GOPATH=/go
+ENV APP_MODE=production \
+    APP_PORT=9000 \
+    GOPATH=/go
 
 RUN apk add --no-cache ca-certificates
 RUN apk --no-cache add --virtual build-dependencies bash gcc musl-dev openssl go git \
